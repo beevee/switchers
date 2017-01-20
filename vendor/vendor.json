@@ -39,10 +39,28 @@
 			"revisionTime": "2016-08-04T19:14:07Z"
 		},
 		{
+			"checksumSHA1": "7IIL5Q2RcLyUsWwxjdyzZ646D3k=",
+			"path": "github.com/zabawaba99/firego",
+			"revision": "0c2a1bbd0ca94d606f13f2d5e05cae129c85879a",
+			"revisionTime": "2017-01-19T13:49:49Z"
+		},
+		{
+			"checksumSHA1": "deLZBkD2q2GjzsWe7c2F/m7ZuTE=",
+			"path": "github.com/zabawaba99/firego/sync",
+			"revision": "0c2a1bbd0ca94d606f13f2d5e05cae129c85879a",
+			"revisionTime": "2017-01-19T13:49:49Z"
+		},
+		{
 			"checksumSHA1": "WiyCOMvfzRdymImAJ3ME6aoYUdM=",
 			"path": "gopkg.in/tomb.v2",
 			"revision": "14b3d72120e8d10ea6e6b7f87f7175734b1faab8",
 			"revisionTime": "2014-06-26T14:46:23Z"
+		},
+		{
+			"checksumSHA1": "DZFzY9Xq5OzuLkzOd/lJbNsjNiI=",
+			"path": "gopkg.in/zabawaba99/firego.v1",
+			"revision": "0c2a1bbd0ca94d606f13f2d5e05cae129c85879a",
+			"revisionTime": "2017-01-19T13:49:49Z"
 		}
 	],
 	"rootPath": "github.com/beevee/switchers"

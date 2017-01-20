@@ -11,10 +11,11 @@ import (
 
 // Bot handles interactions with Telegram users
 type Bot struct {
-	TelegramToken string
-	Logger        switchers.Logger
-	telebot       *telebot.Bot
-	tomb          tomb.Tomb
+	TelegramToken    string
+	PlayerRepository switchers.PlayerRepository
+	Logger           switchers.Logger
+	telebot          *telebot.Bot
+	tomb             tomb.Tomb
 }
 
 // Start initializes Telegram API connections
@@ -52,4 +53,12 @@ func (b *Bot) handleMessage(message telebot.Message) {
 	b.Logger.Log("msg", "message received", "firstname", message.Sender.FirstName,
 		"lastname", message.Sender.LastName, "username", message.Sender.Username,
 		"chatid", message.Chat.ID, "command", message.Text)
+
+	player, created, err := b.PlayerRepository.GetOrCreatePlayer(message.Chat.ID)
+	if err != nil {
+		b.Logger.Log("msg", "error retrieving player profile", "error", err)
+	}
+	if created {
+		b.Logger.Log("msg", "created player profile", "chatid", player.ChatID)
+	}
 }

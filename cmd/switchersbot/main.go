@@ -11,6 +11,7 @@ import (
 	"github.com/jessevdk/go-flags"
 
 	"github.com/beevee/switchers"
+	"github.com/beevee/switchers/firebase"
 	"github.com/beevee/switchers/telegram"
 )
 
@@ -42,11 +43,18 @@ func main() {
 
 	logger.Log("msg", "starting program", "pid", os.Getpid())
 
-	bot := &telegram.Bot{
-		TelegramToken: opts.TelegramToken,
-		Logger:        logger,
+	playerRepository := &firebase.PlayerRepository{
+		FirebaseToken: opts.FirebaseToken,
+		FirebaseURL:   opts.FirebaseURL,
 	}
 
+	bot := &telegram.Bot{
+		TelegramToken:    opts.TelegramToken,
+		PlayerRepository: playerRepository,
+		Logger:           log.NewContext(logger).With("component", "telegram"),
+	}
+
+	mustStart(playerRepository)
 	mustStart(bot)
 
 	signalChannel := make(chan os.Signal)
@@ -54,6 +62,7 @@ func main() {
 	logger.Log("msg", "received signal", "signal", <-signalChannel)
 
 	mustStop(bot)
+	mustStop(playerRepository)
 }
 
 func mustStart(service switchers.Service) {
