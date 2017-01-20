@@ -30,12 +30,6 @@ deploy:
   on:
     branch: master
 - provider: script
-  skip_cleanup: true
-  script:
-  - rsync --quiet $TRAVIS_BUILD_DIR/cmd/switchersbot/schedule.yml deploy@beevee.ru:/opt/switchersbot/
-  on:
-    branch: master
-- provider: script
   script:
   - ssh deploy@beevee.ru 'sudo systemctl restart switchersbot'
   on:
