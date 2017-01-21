@@ -1,6 +1,7 @@
 package telegram
 
 import (
+	"strconv"
 	"time"
 
 	"github.com/tucnak/telebot"
@@ -54,11 +55,22 @@ func (b *Bot) handleMessage(message telebot.Message) {
 		"lastname", message.Sender.LastName, "username", message.Sender.Username,
 		"chatid", message.Chat.ID, "command", message.Text)
 
-	player, created, err := b.PlayerRepository.GetOrCreatePlayer(message.Chat.ID)
+	player, created, err := b.PlayerRepository.GetOrCreatePlayer("telegram_" + strconv.FormatInt(message.Chat.ID, 10))
 	if err != nil {
 		b.Logger.Log("msg", "error retrieving player profile", "error", err)
 	}
 	if created {
-		b.Logger.Log("msg", "created player profile", "chatid", player.ChatID)
+		b.Logger.Log("msg", "created player profile", "chatid", player.ID)
+	}
+
+	response := player.ExecuteCommand(message.Text)
+
+	if err := b.telebot.SendMessage(message.Sender, response, nil); err != nil {
+		b.Logger.Log("msg", "error sending response, will NOT save player profile", "error", err)
+		return
+	}
+
+	if err := b.PlayerRepository.SavePlayer(player); err != nil {
+		b.Logger.Log("msg", "error saving player profile", "error", err)
 	}
 }

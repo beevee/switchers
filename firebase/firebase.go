@@ -1,8 +1,6 @@
 package firebase
 
 import (
-	"strconv"
-
 	"github.com/zabawaba99/firego"
 
 	"github.com/beevee/switchers"
@@ -29,8 +27,8 @@ func (pr *PlayerRepository) Stop() error {
 }
 
 // GetOrCreatePlayer retrieves player profile, creating it if necessary
-func (pr *PlayerRepository) GetOrCreatePlayer(chatID int64) (*switchers.Player, bool, error) {
-	ref, err := pr.firebase.Ref("users/" + strconv.FormatInt(chatID, 10))
+func (pr *PlayerRepository) GetOrCreatePlayer(ID string) (*switchers.Player, bool, error) {
+	ref, err := pr.firebase.Ref("users/" + ID)
 	if err != nil {
 		return nil, false, err
 	}
@@ -40,8 +38,8 @@ func (pr *PlayerRepository) GetOrCreatePlayer(chatID int64) (*switchers.Player, 
 	if err = ref.Value(player); err != nil {
 		return nil, false, err
 	}
-	if player.ChatID != chatID {
-		player.ChatID = chatID
+	if player.ID != ID {
+		player.ID = ID
 		if err = ref.Set(player); err != nil {
 			return nil, false, err
 		}
@@ -49,4 +47,14 @@ func (pr *PlayerRepository) GetOrCreatePlayer(chatID int64) (*switchers.Player, 
 	}
 
 	return player, created, nil
+}
+
+// SavePlayer saves player profile
+func (pr *PlayerRepository) SavePlayer(player *switchers.Player) error {
+	ref, err := pr.firebase.Ref("users/" + player.ID)
+	if err != nil {
+		return err
+	}
+
+	return ref.Set(player)
 }
