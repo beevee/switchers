@@ -13,6 +13,8 @@ const (
 	stateAskName = "askname"
 	stateIdle    = "idle"
 
+	commandResign = "/resign"
+
 	commandSetName = "/setname"
 	commandPause   = "/pause"
 	commandResume  = "/resume"
@@ -20,15 +22,33 @@ const (
 
 // Player is a player
 type Player struct {
-	ID     string
-	State  string
-	Name   string
-	Paused bool
-	Score  int
+	ID      string
+	IsTrump bool
+	State   string
+	Name    string
+	Paused  bool
+	Score   int
 }
 
-// ExecuteCommand takes text command from a user, updates internal state and returns response
+// ExecuteCommand takes text command from a player, updates internal state and returns response
 func (p *Player) ExecuteCommand(command string) string {
+	if p.IsTrump {
+		return p.executeTrumpCommand(command)
+	}
+	return p.executePlayerCommand(command)
+}
+
+func (p *Player) executeTrumpCommand(command string) string {
+	switch command {
+	case commandResign:
+		p.IsTrump = false
+		return "Отставка принята."
+	}
+
+	return fmt.Sprintf("Добро пожаловать, господин президент. Издайте какой-нибудь указ:\n\n%s — подать в отставку", commandResign)
+}
+
+func (p *Player) executePlayerCommand(command string) string {
 	if command == commandPause {
 		p.Paused = true
 	}

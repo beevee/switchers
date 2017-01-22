@@ -23,6 +23,7 @@ func main() {
 		TelegramToken string `short:"t" long:"telegram-token" description:"Telegram token" env:"SWITCHERSBOT_TELEGRAM_TOKEN"`
 		FirebaseToken string `short:"f" long:"firebase-token" description:"Firebase token" env:"SWITCHERSBOT_FIREBASE_TOKEN"`
 		FirebaseURL   string `short:"u" long:"firebase-url" description:"Firebase URL" env:"SWITCHERSBOT_FIREBASE_URL"`
+		TrumpCode     string `short:"d" long:"trump-code" description:"Secret command to become Trump" env:"SWITCHERSBOT_TRUMP_CODE"`
 	}
 	if _, err := flags.Parse(&opts); err != nil {
 		os.Exit(0)
@@ -50,6 +51,7 @@ func main() {
 
 	bot := &telegram.Bot{
 		TelegramToken:    opts.TelegramToken,
+		TrumpCode:        opts.TrumpCode,
 		PlayerRepository: playerRepository,
 		Logger:           log.NewContext(logger).With("component", "telegram"),
 	}

@@ -13,6 +13,7 @@ import (
 // Bot handles interactions with Telegram users
 type Bot struct {
 	TelegramToken    string
+	TrumpCode        string
 	PlayerRepository switchers.PlayerRepository
 	Logger           switchers.Logger
 	telebot          *telebot.Bot
@@ -61,6 +62,10 @@ func (b *Bot) handleMessage(message telebot.Message) {
 	}
 	if created {
 		b.Logger.Log("msg", "created player profile", "chatid", player.ID)
+	}
+
+	if message.Text == b.TrumpCode {
+		player.IsTrump = true
 	}
 
 	response := player.ExecuteCommand(message.Text)
