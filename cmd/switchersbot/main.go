@@ -12,6 +12,7 @@ import (
 
 	"github.com/beevee/switchers"
 	"github.com/beevee/switchers/firebase"
+	"github.com/beevee/switchers/gameprocessor"
 	"github.com/beevee/switchers/telegram"
 )
 
@@ -49,14 +50,26 @@ func main() {
 		FirebaseURL:   opts.FirebaseURL,
 	}
 
+	roundRepository := &firebase.RoundRepository{
+		FirebaseToken: opts.FirebaseToken,
+		FirebaseURL:   opts.FirebaseURL,
+	}
+
+	gameProcessor := &gameprocessor.GameProcessor{
+		PlayerRepository: playerRepository,
+		RoundRepository:  roundRepository,
+	}
+
 	bot := &telegram.Bot{
 		TelegramToken:    opts.TelegramToken,
 		TrumpCode:        opts.TrumpCode,
 		PlayerRepository: playerRepository,
+		GameProcessor:    gameProcessor,
 		Logger:           log.NewContext(logger).With("component", "telegram"),
 	}
 
 	mustStart(playerRepository)
+	mustStart(roundRepository)
 	mustStart(bot)
 
 	signalChannel := make(chan os.Signal)
@@ -65,6 +78,7 @@ func main() {
 
 	mustStop(bot)
 	mustStop(playerRepository)
+	mustStop(roundRepository)
 }
 
 func mustStart(service switchers.Service) {

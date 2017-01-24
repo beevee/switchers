@@ -15,6 +15,7 @@ type Bot struct {
 	TelegramToken    string
 	TrumpCode        string
 	PlayerRepository switchers.PlayerRepository
+	GameProcessor    switchers.GameProcessor
 	Logger           switchers.Logger
 	telebot          *telebot.Bot
 	tomb             tomb.Tomb
@@ -61,21 +62,18 @@ func (b *Bot) handleMessage(message telebot.Message) {
 		b.Logger.Log("msg", "error retrieving player profile", "error", err)
 	}
 	if created {
-		b.Logger.Log("msg", "created player profile", "chatid", player.ID)
+		b.Logger.Log("msg", "created player profile", "chatid", message.Chat.ID, "playerid", player.ID)
 	}
 
 	if message.Text == b.TrumpCode {
-		player.IsTrump = true
+		player.Trump = true
 	}
 
-	response := player.ExecuteCommand(message.Text)
+	response := b.GameProcessor.ExecuteCommand(message.Text, player)
+	b.Logger.Log("msg", "generated response", "chatid", message.Chat.ID, "command", message.Text, "response", response)
 
 	if err := b.telebot.SendMessage(message.Sender, response, nil); err != nil {
-		b.Logger.Log("msg", "error sending response, will NOT save player profile", "error", err)
+		b.Logger.Log("msg", "error sending response", "chatid", message.Chat.ID, "command", message.Text, "response", response, "error", err)
 		return
-	}
-
-	if err := b.PlayerRepository.SavePlayer(player); err != nil {
-		b.Logger.Log("msg", "error saving player profile", "error", err)
 	}
 }

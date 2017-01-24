@@ -28,7 +28,7 @@ func (pr *PlayerRepository) Stop() error {
 
 // GetOrCreatePlayer retrieves player profile, creating it if necessary
 func (pr *PlayerRepository) GetOrCreatePlayer(ID string) (*switchers.Player, bool, error) {
-	ref, err := pr.firebase.Ref("users/" + ID)
+	ref, err := pr.firebase.Ref("players/" + ID)
 	if err != nil {
 		return nil, false, err
 	}
@@ -51,7 +51,7 @@ func (pr *PlayerRepository) GetOrCreatePlayer(ID string) (*switchers.Player, boo
 
 // SavePlayer saves player profile
 func (pr *PlayerRepository) SavePlayer(player *switchers.Player) error {
-	ref, err := pr.firebase.Ref("users/" + player.ID)
+	ref, err := pr.firebase.Ref("players/" + player.ID)
 	if err != nil {
 		return err
 	}
