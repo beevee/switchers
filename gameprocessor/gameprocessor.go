@@ -7,9 +7,12 @@ import (
 )
 
 const (
-	playerStateNew     = ""
-	playerStateAskName = "askname"
-	playerStateIdle    = "idle"
+	playerStateNew        = ""
+	playerStateAskName    = "askname"
+	playerStateIdle       = "idle"
+	playerStateGathering  = "gathering"
+	playerStatePlaying    = "playing"
+	playerStateModeration = "moderation"
 
 	teamMinSize = 6
 
@@ -50,4 +53,30 @@ func (gp *GameProcessor) Start() error {
 func (gp *GameProcessor) Stop() error {
 	gp.tomb.Kill(nil)
 	return gp.tomb.Wait()
+}
+
+// ExecuteCommand takes text command from a player, updates internal state and returns response
+func (gp *GameProcessor) ExecuteCommand(command string, playerID string) {
+	player, created, err := gp.PlayerRepository.GetOrCreatePlayer(playerID)
+	if err != nil {
+		gp.Logger.Log("msg", "error retrieving player profile while executing command", "error", err)
+	}
+	if created {
+		gp.Logger.Log("msg", "created player profile", "playerid", player.ID)
+	}
+
+	if command == gp.TrumpCode {
+		player.Trump = true
+	}
+
+	if player.Trump {
+		gp.executeTrumpCommand(command, player)
+	} else {
+		gp.executePlayerCommand(command, player)
+	}
+
+	if err := gp.PlayerRepository.SavePlayer(player); err != nil {
+		gp.Logger.Log("msg", "error saving player profile after executing command", "playerid", player.ID)
+		gp.Bot.SendMessage(player.ID, "Что-то пошло не так, возможно надо попробовать еще раз.")
+	}
 }

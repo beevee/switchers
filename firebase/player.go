@@ -58,6 +58,16 @@ func (pr *PlayerRepository) GetAllTrumps() (map[string]*switchers.Player, error)
 	return players, nil
 }
 
+// SetPlayerState sets player state
+func (pr *PlayerRepository) SetPlayerState(playerID string, state string) error {
+	ref, err := pr.firebase.Ref("players/" + playerID + "/State")
+	if err != nil {
+		return err
+	}
+
+	return ref.Set(state)
+}
+
 // SavePlayer saves player profile
 func (pr *PlayerRepository) SavePlayer(player *switchers.Player) error {
 	ref, err := pr.firebase.Ref("players/" + player.ID)

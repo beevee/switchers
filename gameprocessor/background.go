@@ -61,6 +61,8 @@ func (gp *GameProcessor) deadlineEnforcer() error {
 						gp.Logger.Log("msg", "timeouted a team (gathering)", "index", i)
 						gp.notifyTrumps(fmt.Sprintf("У команды %d закончилось время на сборы, они проиграли.", i))
 					}
+					gp.notifyTeam(team, "Время вышло :( Этот раунд вы проиграли, но в следующий раз повезет! Ждите следующий раунд.")
+					gp.updateTeamMemberStates(team, playerStateIdle)
 				}
 			}
 		case <-gp.tomb.Dying():

@@ -33,7 +33,8 @@ func (gp *GameProcessor) executeTrumpCommand(command string, player *switchers.P
 		}
 
 		for _, team := range round.Teams {
-			gp.notifyTeam(&team, team.GatheringTask.Text)
+			gp.notifyTeam(team, team.GatheringTask.Text)
+			gp.updateTeamMemberStates(team, playerStateGathering)
 		}
 
 		response = "Начался новый раунд."
