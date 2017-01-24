@@ -1,35 +1,23 @@
 package firebase
 
 import (
-	"github.com/zabawaba99/firego"
+	"strconv"
+	"time"
 
 	"github.com/beevee/switchers"
+	"github.com/satori/go.uuid"
 )
 
 // RoundRepository persists round information in Firebase
 type RoundRepository struct {
-	FirebaseURL   string
-	FirebaseToken string
-	firebase      *firego.Firebase
-}
-
-// Start initializes firebase connection
-func (rr *RoundRepository) Start() error {
-	rr.firebase = firego.New(rr.FirebaseURL, nil)
-	rr.firebase.Auth(rr.FirebaseToken)
-
-	return nil
-}
-
-// Stop does nothing
-func (rr *RoundRepository) Stop() error {
-	return nil
+	Repository
 }
 
 // CreateActiveRound creates new active round
 func (rr *RoundRepository) CreateActiveRound() (*switchers.Round, error) {
 	round := &switchers.Round{
-		ID: "active",
+		ID:        "active",
+		StartTime: time.Now(),
 	}
 
 	ref, err := rr.firebase.Ref("rounds/active")
@@ -58,6 +46,26 @@ func (rr *RoundRepository) GetActiveRound() (*switchers.Round, error) {
 	return round, nil
 }
 
+// DeactivateRound puts active round into archive
+func (rr *RoundRepository) DeactivateRound(round *switchers.Round) error {
+	if round.ID != "active" {
+		return nil
+	}
+
+	round.ID = uuid.NewV4().String()
+	round.FinishTime = time.Now()
+	if err := rr.SaveRound(round); err != nil {
+		return err
+	}
+
+	ref, err := rr.firebase.Ref("rounds/active")
+	if err != nil {
+		return err
+	}
+
+	return ref.Remove()
+}
+
 // SaveRound saves round
 func (rr *RoundRepository) SaveRound(round *switchers.Round) error {
 	ref, err := rr.firebase.Ref("rounds/" + round.ID)
@@ -66,4 +74,14 @@ func (rr *RoundRepository) SaveRound(round *switchers.Round) error {
 	}
 
 	return ref.Set(round)
+}
+
+// SaveTeam saves a single team inside a round
+func (rr *RoundRepository) SaveTeam(round *switchers.Round, index int, team switchers.Team) error {
+	ref, err := rr.firebase.Ref("rounds/" + round.ID + "/Teams/" + strconv.FormatInt(int64(index), 10))
+	if err != nil {
+		return err
+	}
+
+	return ref.Set(team)
 }

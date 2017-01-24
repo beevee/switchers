@@ -2,6 +2,7 @@ package telegram
 
 import (
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/tucnak/telebot"
@@ -36,7 +37,11 @@ func (b *Bot) Start() error {
 		for {
 			select {
 			case message := <-messages:
-				b.handleMessage(message)
+				b.Logger.Log("msg", "Telegram message received", "firstname", message.Sender.FirstName,
+					"lastname", message.Sender.LastName, "username", message.Sender.Username,
+					"chatid", message.Chat.ID, "message", message.Text)
+
+				b.GameProcessor.ExecuteCommand(message.Text, "telegram_"+strconv.FormatInt(message.Chat.ID, 10))
 			case <-b.tomb.Dying():
 				return nil
 			}
@@ -52,28 +57,23 @@ func (b *Bot) Stop() error {
 	return b.tomb.Wait()
 }
 
-func (b *Bot) handleMessage(message telebot.Message) {
-	b.Logger.Log("msg", "message received", "firstname", message.Sender.FirstName,
-		"lastname", message.Sender.LastName, "username", message.Sender.Username,
-		"chatid", message.Chat.ID, "command", message.Text)
-
-	player, created, err := b.PlayerRepository.GetOrCreatePlayer("telegram_" + strconv.FormatInt(message.Chat.ID, 10))
-	if err != nil {
-		b.Logger.Log("msg", "error retrieving player profile", "error", err)
-	}
-	if created {
-		b.Logger.Log("msg", "created player profile", "chatid", message.Chat.ID, "playerid", player.ID)
-	}
-
-	if message.Text == b.TrumpCode {
-		player.Trump = true
-	}
-
-	response := b.GameProcessor.ExecuteCommand(message.Text, player)
-	b.Logger.Log("msg", "generated response", "chatid", message.Chat.ID, "command", message.Text, "response", response)
-
-	if err := b.telebot.SendMessage(message.Sender, response, nil); err != nil {
-		b.Logger.Log("msg", "error sending response", "chatid", message.Chat.ID, "command", message.Text, "response", response, "error", err)
+// SendMessage sends message to Telegram user
+func (b *Bot) SendMessage(ID string, message string) {
+	if !strings.HasPrefix(ID, "telegram_") {
+		b.Logger.Log("msg", "cannot send messages to a non-Telegram user", "id", ID, "message", message)
 		return
 	}
+
+	chatID, err := strconv.ParseInt(ID[9:], 10, 64)
+	if err != nil {
+		b.Logger.Log("msg", "unexpected non-numeric Telegram chat id", "id", ID, "message", message, "error", err)
+		return
+	}
+
+	if err = b.telebot.SendMessage(telebot.Chat{ID: chatID}, message, nil); err != nil {
+		b.Logger.Log("msg", "failed to send message to user", "id", ID, "message", message, "error", err)
+		return
+	}
+
+	b.Logger.Log("msg", "Telegram message sent", "chatid", ID, "message", message)
 }

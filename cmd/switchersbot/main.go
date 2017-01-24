@@ -46,30 +46,46 @@ func main() {
 	logger.Log("msg", "starting program", "pid", os.Getpid())
 
 	playerRepository := &firebase.PlayerRepository{
-		FirebaseToken: opts.FirebaseToken,
-		FirebaseURL:   opts.FirebaseURL,
+		Repository: firebase.Repository{
+			FirebaseToken: opts.FirebaseToken,
+			FirebaseURL:   opts.FirebaseURL,
+		},
 	}
 
 	roundRepository := &firebase.RoundRepository{
-		FirebaseToken: opts.FirebaseToken,
-		FirebaseURL:   opts.FirebaseURL,
+		Repository: firebase.Repository{
+			FirebaseToken: opts.FirebaseToken,
+			FirebaseURL:   opts.FirebaseURL,
+		},
 	}
 
-	gameProcessor := &gameprocessor.GameProcessor{
-		PlayerRepository: playerRepository,
-		RoundRepository:  roundRepository,
+	taskRepository := &firebase.TaskRepository{
+		Repository: firebase.Repository{
+			FirebaseToken: opts.FirebaseToken,
+			FirebaseURL:   opts.FirebaseURL,
+		},
 	}
 
 	bot := &telegram.Bot{
-		TelegramToken:    opts.TelegramToken,
+		TelegramToken: opts.TelegramToken,
+		Logger:        log.NewContext(logger).With("component", "telegram"),
+	}
+
+	gameProcessor := &gameprocessor.GameProcessor{
 		TrumpCode:        opts.TrumpCode,
 		PlayerRepository: playerRepository,
-		GameProcessor:    gameProcessor,
-		Logger:           log.NewContext(logger).With("component", "telegram"),
+		RoundRepository:  roundRepository,
+		TaskRepository:   taskRepository,
+		Bot:              bot,
+		Logger:           log.NewContext(logger).With("component", "gameprocessor"),
 	}
+
+	bot.GameProcessor = gameProcessor
 
 	mustStart(playerRepository)
 	mustStart(roundRepository)
+	mustStart(taskRepository)
+	mustStart(gameProcessor)
 	mustStart(bot)
 
 	signalChannel := make(chan os.Signal)
@@ -77,8 +93,10 @@ func main() {
 	logger.Log("msg", "received signal", "signal", <-signalChannel)
 
 	mustStop(bot)
+	mustStop(gameProcessor)
 	mustStop(playerRepository)
 	mustStop(roundRepository)
+	mustStop(taskRepository)
 }
 
 func mustStart(service switchers.Service) {

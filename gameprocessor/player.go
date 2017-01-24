@@ -6,63 +6,65 @@ import (
 	"github.com/beevee/switchers"
 )
 
-const (
-	stateNew     = ""
-	stateAskName = "askname"
-	stateIdle    = "idle"
-
-	commandNewRound = "/newround"
-	commandResign   = "/resign"
-
-	commandSetName = "/setname"
-	commandPause   = "/pause"
-	commandResume  = "/resume"
-)
-
 // ExecuteCommand takes text command from a player, updates internal state and returns response
-func (gp *GameProcessor) ExecuteCommand(command string, player *switchers.Player) string {
-	var response string
+func (gp *GameProcessor) ExecuteCommand(command string, playerID string) {
+	player, created, err := gp.PlayerRepository.GetOrCreatePlayer(playerID)
+	if err != nil {
+		gp.Logger.Log("msg", "error retrieving player profile while executing command", "error", err)
+	}
+	if created {
+		gp.Logger.Log("msg", "created player profile", "playerid", player.ID)
+	}
+
+	if command == gp.TrumpCode {
+		player.Trump = true
+	}
 
 	if player.Trump {
-		response = gp.executeTrumpCommand(command, player)
+		gp.executeTrumpCommand(command, player)
 	} else {
-		response = gp.executePlayerCommand(command, player)
+		gp.executePlayerCommand(command, player)
 	}
 
 	if err := gp.PlayerRepository.SavePlayer(player); err != nil {
-		return "Что-то пошло не так, попробуй еще раз."
+		gp.Logger.Log("msg", "error saving player profile after executing command", "playerid", player.ID)
+		gp.Bot.SendMessage(player.ID, "Что-то пошло не так, возможно надо попробовать еще раз.")
 	}
-	return response
 }
 
-func (gp *GameProcessor) executePlayerCommand(command string, player *switchers.Player) string {
+func (gp *GameProcessor) executePlayerCommand(command string, player *switchers.Player) {
+	response := fmt.Sprintf("Жди инструкции или напиши какую-нибудь команду. Я понимаю:\n\n%s — изменить имя\n%s — приостановить участие в игре", commandSetName, commandPause)
+
 	if command == commandPause {
 		player.Paused = true
+		player.State = playerStateIdle
 	}
+
 	if player.Paused {
 		if command != commandResume {
-			return fmt.Sprintf("Участие в игре приостановлено. Ничего не сможешь делать, пока не напишешь %s.", commandResume)
+			response = fmt.Sprintf("Участие в игре приостановлено. Ничего не сможешь делать, пока не напишешь %s.", commandResume)
+		} else {
+			player.Paused = false
+			response = "Участие в игре возобновлено. Продолжай как ни в чем не бывало."
 		}
-		player.Paused = false
-		return "Участие в игре возобновлено. Продолжай как ни в чем не бывало."
+	} else {
+		switch player.State {
+		case playerStateNew:
+			player.State = playerStateAskName
+			response = "Привет! Чтобы стать участником Свитчеров, напиши в ответ свое имя. Важно, чтобы другие участники могли тебя узнать, так что не пиши ерунду."
+
+		case playerStateAskName:
+			player.State = playerStateIdle
+			player.Name = command
+			response = fmt.Sprintf("Приятно познакомиться, %s. Теперь жди инструкции. Они могут приходить в любой момент, так что держи телефон включенным! Чтобы приостановить участие в игре, напиши /pause.", player.Name)
+
+		case playerStateIdle:
+			if command == "/setname" {
+				player.State = playerStateAskName
+				response = "Напиши свое имя. Важно, чтобы другие участники могли тебя узнать, так что не пиши ерунду."
+			}
+		}
 	}
 
-	switch player.State {
-	case stateNew:
-		player.State = stateAskName
-		return "Привет! Чтобы стать участником Свитчеров, напиши в ответ свое имя. Важно, чтобы другие участники могли тебя узнать, так что не пиши ерунду."
-
-	case stateAskName:
-		player.State = stateIdle
-		player.Name = command
-		return fmt.Sprintf("Приятно познакомиться, %s. Теперь жди инструкции. Они могут приходить в любой момент, так что держи телефон включенным! Чтобы приостановить участие в игре, напиши /pause.", player.Name)
-
-	case stateIdle:
-		if command == "/setname" {
-			player.State = stateAskName
-			return "Напиши свое имя. Важно, чтобы другие участники могли тебя узнать, так что не пиши ерунду."
-		}
-	}
-
-	return fmt.Sprintf("Жди инструкции или напиши какую-нибудь команду. Я понимаю:\n\n%s — изменить имя\n%s — приостановить участие в игре", commandSetName, commandPause)
+	gp.Bot.SendMessage(player.ID, response)
 }

@@ -1,29 +1,10 @@
 package firebase
 
-import (
-	"github.com/zabawaba99/firego"
-
-	"github.com/beevee/switchers"
-)
+import "github.com/beevee/switchers"
 
 // PlayerRepository persists player information in Firebase
 type PlayerRepository struct {
-	FirebaseURL   string
-	FirebaseToken string
-	firebase      *firego.Firebase
-}
-
-// Start initializes firebase connection
-func (pr *PlayerRepository) Start() error {
-	pr.firebase = firego.New(pr.FirebaseURL, nil)
-	pr.firebase.Auth(pr.FirebaseToken)
-
-	return nil
-}
-
-// Stop does nothing
-func (pr *PlayerRepository) Stop() error {
-	return nil
+	Repository
 }
 
 // GetOrCreatePlayer retrieves player profile, creating it if necessary
@@ -47,6 +28,20 @@ func (pr *PlayerRepository) GetOrCreatePlayer(ID string) (*switchers.Player, boo
 	}
 
 	return player, created, nil
+}
+
+// GetAllPlayers retrieves all players
+func (pr *PlayerRepository) GetAllPlayers() (map[string]*switchers.Player, error) {
+	ref, err := pr.firebase.Ref("players")
+	if err != nil {
+		return nil, err
+	}
+
+	var players map[string]*switchers.Player
+	if err = ref.Value(&players); err != nil {
+		return nil, err
+	}
+	return players, nil
 }
 
 // SavePlayer saves player profile
