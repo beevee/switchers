@@ -44,6 +44,20 @@ func (pr *PlayerRepository) GetAllPlayers() (map[string]*switchers.Player, error
 	return players, nil
 }
 
+// GetAllTrumps retrieves all Trumps
+func (pr *PlayerRepository) GetAllTrumps() (map[string]*switchers.Player, error) {
+	ref, err := pr.firebase.Ref("players")
+	if err != nil {
+		return nil, err
+	}
+
+	var players map[string]*switchers.Player
+	if err = ref.OrderBy("Trump").EqualTo("true").Value(&players); err != nil {
+		return nil, err
+	}
+	return players, nil
+}
+
 // SavePlayer saves player profile
 func (pr *PlayerRepository) SavePlayer(player *switchers.Player) error {
 	ref, err := pr.firebase.Ref("players/" + player.ID)

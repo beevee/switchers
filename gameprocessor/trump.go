@@ -32,6 +32,10 @@ func (gp *GameProcessor) executeTrumpCommand(command string, player *switchers.P
 			response = fmt.Sprintf("Произошла ошибка при сохранении сгенерированного активного раунда: %s", err)
 		}
 
+		for _, team := range round.Teams {
+			gp.notifyTeam(&team, team.GatheringTask.Text)
+		}
+
 		response = "Начался новый раунд."
 	case commandResign:
 		player.Trump = false
@@ -39,4 +43,15 @@ func (gp *GameProcessor) executeTrumpCommand(command string, player *switchers.P
 	}
 
 	gp.Bot.SendMessage(player.ID, response)
+}
+
+func (gp *GameProcessor) notifyTrumps(message string) {
+	trumpIDs, err := gp.PlayerRepository.GetAllTrumps()
+	if err != nil {
+		gp.Logger.Log("msg", "failed to notify Trumps", "message", message, "error", err)
+	} else {
+		for trumpID := range trumpIDs {
+			gp.Bot.SendMessage(trumpID, message)
+		}
+	}
 }

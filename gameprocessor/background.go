@@ -1,6 +1,9 @@
 package gameprocessor
 
-import "time"
+import (
+	"fmt"
+	"time"
+)
 
 func (gp *GameProcessor) roundDeactivator() error {
 	ticker := time.NewTicker(time.Minute)
@@ -27,6 +30,7 @@ func (gp *GameProcessor) roundDeactivator() error {
 				break
 			}
 			gp.Logger.Log("msg", "deactivated a round", "newid", round.ID)
+			gp.notifyTrumps("Активный раунд завершился.")
 		case <-gp.tomb.Dying():
 			return nil
 		}
@@ -55,6 +59,7 @@ func (gp *GameProcessor) deadlineEnforcer() error {
 						gp.Logger.Log("msg", "failed to save timeouted team (gathering)", "index", i, "error", err)
 					} else {
 						gp.Logger.Log("msg", "timeouted a team (gathering)", "index", i)
+						gp.notifyTrumps(fmt.Sprintf("У команды %d закончилось время на сборы, они проиграли.", i))
 					}
 				}
 			}

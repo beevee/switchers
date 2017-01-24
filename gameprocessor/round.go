@@ -29,6 +29,7 @@ func (gp *GameProcessor) populateRound(round *switchers.Round) error {
 	}
 
 	teamCount := len(eligiblePlayerIDs) / teamMinSize
+	gp.Logger.Log("msg", "calculated team count", "count", teamCount, "minsize", teamMinSize)
 
 	gatheringTasks, err := gp.TaskRepository.GetAllGatheringTasks()
 	if err != nil {
@@ -56,6 +57,7 @@ func (gp *GameProcessor) populateRound(round *switchers.Round) error {
 		teamNumber := i % teamCount
 		round.Teams[teamNumber].PlayerIDs[playerID] = false
 	}
+	gp.Logger.Log("msg", "round population finished")
 
 	return nil
 }

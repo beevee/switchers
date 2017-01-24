@@ -6,6 +6,7 @@ import "time"
 type PlayerRepository interface {
 	GetOrCreatePlayer(ID string) (*Player, bool, error)
 	GetAllPlayers() (map[string]*Player, error)
+	GetAllTrumps() (map[string]*Player, error)
 	SavePlayer(player *Player) error
 }
 
@@ -62,7 +63,7 @@ type GatheringTask struct {
 type ActualTask struct {
 	Text             string
 	TimeLimitMinutes int
-	Moderated        bool
+	CorrectAnswer    string
 }
 
 // Bot maintains communication with players
