@@ -30,6 +30,9 @@ func (gp *GameProcessor) populateRound(round *switchers.Round) error {
 
 	teamCount := len(eligiblePlayerIDs) / teamMinSize
 	gp.Logger.Log("msg", "calculated team count", "count", teamCount, "minsize", teamMinSize)
+	if teamCount == 0 {
+		return errors.New("not enough players to form a single team")
+	}
 
 	gatheringTasks, err := gp.TaskRepository.GetAllGatheringTasks()
 	if err != nil {
