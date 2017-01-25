@@ -2,6 +2,7 @@ package gameprocessor
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/beevee/switchers"
 )
@@ -80,7 +81,7 @@ func (gp *GameProcessor) executePlayerCommand(command string, player *switchers.
 		}
 
 		if round.Teams[playersTeamIndex].State == teamStateGathering {
-			if command == "тут" {
+			if strings.ToLower(command) == "тут" {
 				if err = gp.RoundRepository.SetPlayerGathered(round, playersTeamIndex, player.ID); err != nil {
 					gp.Bot.SendMessage(player.ID, somethingWrongResponse)
 					gp.Logger.Log("msg", "failed to set player gathered state", "playerid", player.ID, "teamindex", playersTeamIndex)
@@ -94,6 +95,11 @@ func (gp *GameProcessor) executePlayerCommand(command string, player *switchers.
 		}
 
 		if round.Teams[playersTeamIndex].State == teamStatePlaying {
+			if strings.ToLower(command) == "тут" {
+				gp.Bot.SendMessage(player.ID, "Все уже собрались, можно больше не писать \"тут\". Отвечай на задание.")
+				return
+			}
+
 			if err = gp.RoundRepository.SetTeamAnswer(round, playersTeamIndex, command); err != nil {
 				gp.Bot.SendMessage(player.ID, somethingWrongResponse)
 				gp.Logger.Log("msg", "failed to set team answer", "playerid", player.ID, "teamindex", playersTeamIndex, "answer", command)
