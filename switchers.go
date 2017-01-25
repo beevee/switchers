@@ -11,6 +11,7 @@ type PlayerRepository interface {
 	SetPaused(player *Player, paused bool) error
 	SetTrump(player *Player, trump bool) error
 	SetName(player *Player, name string) error
+	IncreaseScore(player *Player) error
 }
 
 // Player is a player
@@ -31,14 +32,15 @@ type RoundRepository interface {
 	SaveRound(round *Round) error
 	SetPlayerGathered(round *Round, index int, playerID string) error
 	SetTeamState(round *Round, index int, state string) error
+	SetTeamActualDeadline(round *Round, index int, deadline time.Time) error
+	SetTeamAnswer(round *Round, index int, answer string) error
 }
 
 // Round is a round
 type Round struct {
-	ID         string
-	StartTime  time.Time
-	FinishTime time.Time
-	Teams      []Team
+	ID        string
+	StartTime time.Time
+	Teams     []Team
 }
 
 // Team is a team
@@ -55,6 +57,7 @@ type Team struct {
 // TaskRepository persists task information
 type TaskRepository interface {
 	GetAllGatheringTasks() ([]GatheringTask, error)
+	GetAllActualTasks() ([]ActualTask, error)
 }
 
 // GatheringTask is a task to gather team
@@ -67,7 +70,7 @@ type GatheringTask struct {
 type ActualTask struct {
 	Text             string
 	TimeLimitMinutes int
-	CorrectAnswer    string
+	CorrectAnswers   []string
 }
 
 // Bot maintains communication with players

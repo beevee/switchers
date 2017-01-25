@@ -113,3 +113,17 @@ func (pr *PlayerRepository) SetTrump(player *switchers.Player, trump bool) error
 	}
 	return err
 }
+
+// IncreaseScore increases player score
+func (pr *PlayerRepository) IncreaseScore(player *switchers.Player) error {
+	ref, err := pr.firebase.Ref("players/" + player.ID + "/Score")
+	if err != nil {
+		return err
+	}
+
+	err = ref.Set(player.Score + 1)
+	if err == nil {
+		player.Score++
+	}
+	return err
+}

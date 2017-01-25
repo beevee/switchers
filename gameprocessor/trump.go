@@ -7,29 +7,32 @@ import (
 )
 
 func (gp *GameProcessor) executeTrumpCommand(command string, player *switchers.Player) {
-	response := fmt.Sprintf("Добро пожаловать, господин президент. Издайте какой-нибудь указ:\n\n%s — запустить новый раунд\n%s — подать в отставку", commandNewRound, commandResign)
-
 	switch command {
 	case commandNewRound:
 		ar, err := gp.RoundRepository.GetActiveRound()
 		if ar.ID != "" {
-			response = "Сейчас уже идет раунд, новый начать нельзя."
+			gp.Bot.SendMessage(player.ID, "Сейчас уже идет раунд, новый начать нельзя.")
+			return
 		}
 		if err != nil {
-			response = fmt.Sprintf("Произошла ошибка при поиске активного раунда: %s", err)
+			gp.Bot.SendMessage(player.ID, fmt.Sprintf("Произошла ошибка при поиске активного раунда: %s", err))
+			return
 		}
 
 		round, err := gp.RoundRepository.CreateActiveRound()
 		if err != nil {
-			response = fmt.Sprintf("Произошла ошибка при создании активного раунда: %s", err)
+			gp.Bot.SendMessage(player.ID, fmt.Sprintf("Произошла ошибка при создании активного раунда: %s", err))
+			return
 		}
 
 		if err = gp.populateRound(round); err != nil {
-			response = fmt.Sprintf("Произошла ошибка при генерации активного раунда: %s", err)
+			gp.Bot.SendMessage(player.ID, fmt.Sprintf("Произошла ошибка при генерации активного раунда: %s", err))
+			return
 		}
 
 		if err = gp.RoundRepository.SaveRound(round); err != nil {
-			response = fmt.Sprintf("Произошла ошибка при сохранении сгенерированного активного раунда: %s", err)
+			gp.Bot.SendMessage(player.ID, fmt.Sprintf("Произошла ошибка при сохранении сгенерированного активного раунда: %s", err))
+			return
 		}
 
 		for _, team := range round.Teams {
@@ -37,16 +40,19 @@ func (gp *GameProcessor) executeTrumpCommand(command string, player *switchers.P
 			gp.updateTeamMemberStates(team, playerStateInGame)
 		}
 
-		response = "Начался новый раунд."
+		gp.Bot.SendMessage(player.ID, "Начался новый раунд.")
+		return
+
 	case commandResign:
 		if err := gp.PlayerRepository.SetTrump(player, false); err != nil {
-			response = fmt.Sprintf("Произошла ошибка в процедуре отставки: %s", err)
-		} else {
-			response = "Отставка принята."
+			gp.Bot.SendMessage(player.ID, fmt.Sprintf("Произошла ошибка в процедуре отставки: %s", err))
+			return
 		}
+		gp.Bot.SendMessage(player.ID, "Отставка принята.")
+		return
 	}
 
-	gp.Bot.SendMessage(player.ID, response)
+	gp.Bot.SendMessage(player.ID, fmt.Sprintf("Добро пожаловать, господин президент. Издайте какой-нибудь указ:\n\n%s — запустить новый раунд\n%s — подать в отставку", commandNewRound, commandResign))
 }
 
 func (gp *GameProcessor) notifyTrumps(message string) {

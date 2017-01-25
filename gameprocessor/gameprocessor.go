@@ -12,7 +12,8 @@ const (
 	playerStateIdle    = "idle"
 	playerStateInGame  = "ingame"
 
-	teamMinSize = 6
+	teamMinSize    = 6
+	teamQuorumSize = 4
 
 	teamStateGathering  = "gathering"
 	teamStatePlaying    = "playing"

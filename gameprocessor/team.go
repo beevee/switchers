@@ -15,3 +15,16 @@ func (gp *GameProcessor) updateTeamMemberStates(team switchers.Team, state strin
 		}
 	}
 }
+
+func (gp *GameProcessor) increaseTeamMemberScores(team switchers.Team) {
+	for playerID := range team.PlayerIDs {
+		player, _, err := gp.PlayerRepository.GetOrCreatePlayer(playerID)
+		if err != nil {
+			gp.Logger.Log("msg", "failed to increase team member score", "playerid", playerID, "error", err)
+			continue
+		}
+		if err := gp.PlayerRepository.IncreaseScore(player); err != nil {
+			gp.Logger.Log("msg", "failed to increase team member score", "playerid", playerID, "error", err)
+		}
+	}
+}

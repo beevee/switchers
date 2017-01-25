@@ -59,36 +59,49 @@ func (gp *GameProcessor) executePlayerCommand(command string, player *switchers.
 		}
 
 	case playerStateInGame:
-		if command == "тут" {
-			round, err := gp.RoundRepository.GetActiveRound()
-			if err != nil || round.ID == "" {
-				gp.Bot.SendMessage(player.ID, somethingWrongResponse)
-				gp.Logger.Log("msg", "player is in gathering state, but no active round exists", "playerid", player.ID)
-				return
-			}
-			playersTeamIndex := -1
-			for i, team := range round.Teams {
-				_, exists := team.PlayerIDs[player.ID]
-				if exists {
-					playersTeamIndex = i
-					break
-				}
-			}
-			if playersTeamIndex == -1 {
-				gp.Bot.SendMessage(player.ID, somethingWrongResponse)
-				gp.Logger.Log("msg", "player is in gathering state, but no team found", "playerid", player.ID)
-				return
-			}
-			if err = gp.RoundRepository.SetPlayerGathered(round, playersTeamIndex, player.ID); err != nil {
-				gp.Bot.SendMessage(player.ID, somethingWrongResponse)
-				gp.Logger.Log("msg", "failed to set player gathered state", "playerid", player.ID, "teamindex", playersTeamIndex)
-				return
-			}
-			gp.Bot.SendMessage(player.ID, "Ждем отстающих еще немного, и начинаем.")
+		round, err := gp.RoundRepository.GetActiveRound()
+		if err != nil || round.ID == "" {
+			gp.Bot.SendMessage(player.ID, somethingWrongResponse)
+			gp.Logger.Log("msg", "player is in ingame state, but no active round exists", "playerid", player.ID)
 			return
 		}
-		gp.Bot.SendMessage(player.ID, "Соберитесь в указанном месте. Как только соберетесь, каждый должен написать \"тут\".")
-		return
+		playersTeamIndex := -1
+		for i, team := range round.Teams {
+			_, exists := team.PlayerIDs[player.ID]
+			if exists {
+				playersTeamIndex = i
+				break
+			}
+		}
+		if playersTeamIndex == -1 {
+			gp.Bot.SendMessage(player.ID, somethingWrongResponse)
+			gp.Logger.Log("msg", "player is in ingame state, but no team found", "playerid", player.ID)
+			return
+		}
+
+		if round.Teams[playersTeamIndex].State == teamStateGathering {
+			if command == "тут" {
+				if err = gp.RoundRepository.SetPlayerGathered(round, playersTeamIndex, player.ID); err != nil {
+					gp.Bot.SendMessage(player.ID, somethingWrongResponse)
+					gp.Logger.Log("msg", "failed to set player gathered state", "playerid", player.ID, "teamindex", playersTeamIndex)
+					return
+				}
+				gp.Bot.SendMessage(player.ID, "Ждем отстающих еще немного и начинаем.")
+				return
+			}
+			gp.Bot.SendMessage(player.ID, "Соберитесь в указанном месте. Как только соберетесь, каждый должен написать \"тут\".")
+			return
+		}
+
+		if round.Teams[playersTeamIndex].State == teamStatePlaying {
+			if err = gp.RoundRepository.SetTeamAnswer(round, playersTeamIndex, command); err != nil {
+				gp.Bot.SendMessage(player.ID, somethingWrongResponse)
+				gp.Logger.Log("msg", "failed to set team answer", "playerid", player.ID, "teamindex", playersTeamIndex, "answer", command)
+				return
+			}
+			gp.Bot.SendMessage(player.ID, "Ответ принят.")
+			return
+		}
 	}
 
 	gp.Bot.SendMessage(player.ID, fmt.Sprintf("Жди инструкции или напиши какую-нибудь команду. Я понимаю:\n\n%s — изменить имя\n%s — приостановить участие в игре", commandSetName, commandPause))

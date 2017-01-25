@@ -53,7 +53,6 @@ func (rr *RoundRepository) DeactivateRound(round *switchers.Round) error {
 	}
 
 	round.ID = uuid.NewV4().String()
-	round.FinishTime = time.Now()
 	if err := rr.SaveRound(round); err != nil {
 		return err
 	}
@@ -100,6 +99,34 @@ func (rr *RoundRepository) SetTeamState(round *switchers.Round, index int, state
 	err = ref.Set(state)
 	if err != nil {
 		round.Teams[index].State = state
+	}
+	return err
+}
+
+// SetTeamActualDeadline sets deadline for actual task
+func (rr *RoundRepository) SetTeamActualDeadline(round *switchers.Round, index int, deadline time.Time) error {
+	ref, err := rr.firebase.Ref("rounds/" + round.ID + "/Teams/" + strconv.FormatInt(int64(index), 10) + "/ActualDeadline")
+	if err != nil {
+		return err
+	}
+
+	err = ref.Set(deadline)
+	if err != nil {
+		round.Teams[index].ActualDeadline = deadline
+	}
+	return err
+}
+
+// SetTeamAnswer sets team answer for actual task
+func (rr *RoundRepository) SetTeamAnswer(round *switchers.Round, index int, answer string) error {
+	ref, err := rr.firebase.Ref("rounds/" + round.ID + "/Teams/" + strconv.FormatInt(int64(index), 10) + "/Answer")
+	if err != nil {
+		return err
+	}
+
+	err = ref.Set(answer)
+	if err != nil {
+		round.Teams[index].Answer = answer
 	}
 	return err
 }

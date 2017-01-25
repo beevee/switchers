@@ -20,3 +20,17 @@ func (tr *TaskRepository) GetAllGatheringTasks() ([]switchers.GatheringTask, err
 	}
 	return tasks, nil
 }
+
+// GetAllActualTasks retrieves all gathering tasks
+func (tr *TaskRepository) GetAllActualTasks() ([]switchers.ActualTask, error) {
+	ref, err := tr.firebase.Ref("actual_tasks")
+	if err != nil {
+		return nil, err
+	}
+
+	var tasks []switchers.ActualTask
+	if err = ref.Value(&tasks); err != nil {
+		return nil, err
+	}
+	return tasks, nil
+}
