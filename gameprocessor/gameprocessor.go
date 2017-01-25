@@ -7,12 +7,10 @@ import (
 )
 
 const (
-	playerStateNew        = ""
-	playerStateAskName    = "askname"
-	playerStateIdle       = "idle"
-	playerStateGathering  = "gathering"
-	playerStatePlaying    = "playing"
-	playerStateModeration = "moderation"
+	playerStateNew     = ""
+	playerStateAskName = "askname"
+	playerStateIdle    = "idle"
+	playerStateInGame  = "ingame"
 
 	teamMinSize = 6
 
@@ -55,6 +53,10 @@ func (gp *GameProcessor) Stop() error {
 	return gp.tomb.Wait()
 }
 
+const (
+	somethingWrongResponse = "Что-то пошло не так. Попробуй еще раз."
+)
+
 // ExecuteCommand takes text command from a player, updates internal state and returns response
 func (gp *GameProcessor) ExecuteCommand(command string, playerID string) {
 	player, created, err := gp.PlayerRepository.GetOrCreatePlayer(playerID)
@@ -66,17 +68,16 @@ func (gp *GameProcessor) ExecuteCommand(command string, playerID string) {
 	}
 
 	if command == gp.TrumpCode {
-		player.Trump = true
+		if err := gp.PlayerRepository.SetTrump(player, true); err != nil {
+			gp.Bot.SendMessage(player.ID, somethingWrongResponse)
+			gp.Logger.Log("msg", "failed to make player Trump", "error", err)
+			return
+		}
 	}
 
 	if player.Trump {
 		gp.executeTrumpCommand(command, player)
 	} else {
 		gp.executePlayerCommand(command, player)
-	}
-
-	if err := gp.PlayerRepository.SavePlayer(player); err != nil {
-		gp.Logger.Log("msg", "error saving player profile after executing command", "playerid", player.ID)
-		gp.Bot.SendMessage(player.ID, "Что-то пошло не так, возможно надо попробовать еще раз.")
 	}
 }

@@ -7,8 +7,10 @@ type PlayerRepository interface {
 	GetOrCreatePlayer(ID string) (*Player, bool, error)
 	GetAllPlayers() (map[string]*Player, error)
 	GetAllTrumps() (map[string]*Player, error)
-	SetPlayerState(playerID string, state string) error
-	SavePlayer(player *Player) error
+	SetState(player *Player, state string) error
+	SetPaused(player *Player, paused bool) error
+	SetTrump(player *Player, trump bool) error
+	SetName(player *Player, name string) error
 }
 
 // Player is a player
@@ -27,7 +29,8 @@ type RoundRepository interface {
 	GetActiveRound() (*Round, error)
 	DeactivateRound(*Round) error
 	SaveRound(round *Round) error
-	SaveTeam(round *Round, index int, team Team) error
+	SetPlayerGathered(round *Round, index int, playerID string) error
+	SetTeamState(round *Round, index int, state string) error
 }
 
 // Round is a round

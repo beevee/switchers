@@ -76,12 +76,30 @@ func (rr *RoundRepository) SaveRound(round *switchers.Round) error {
 	return ref.Set(round)
 }
 
-// SaveTeam saves a single team inside a round
-func (rr *RoundRepository) SaveTeam(round *switchers.Round, index int, team switchers.Team) error {
-	ref, err := rr.firebase.Ref("rounds/" + round.ID + "/Teams/" + strconv.FormatInt(int64(index), 10))
+// SetPlayerGathered sets flag that a single player in team has gathered
+func (rr *RoundRepository) SetPlayerGathered(round *switchers.Round, index int, playerID string) error {
+	ref, err := rr.firebase.Ref("rounds/" + round.ID + "/Teams/" + strconv.FormatInt(int64(index), 10) + "/PlayerIDs/" + playerID)
 	if err != nil {
 		return err
 	}
 
-	return ref.Set(team)
+	err = ref.Set(true)
+	if err != nil {
+		round.Teams[index].PlayerIDs[playerID] = true
+	}
+	return err
+}
+
+// SetTeamState sets team state
+func (rr *RoundRepository) SetTeamState(round *switchers.Round, index int, state string) error {
+	ref, err := rr.firebase.Ref("rounds/" + round.ID + "/Teams/" + strconv.FormatInt(int64(index), 10) + "/State")
+	if err != nil {
+		return err
+	}
+
+	err = ref.Set(state)
+	if err != nil {
+		round.Teams[index].State = state
+	}
+	return err
 }

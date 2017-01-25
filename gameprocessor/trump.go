@@ -34,13 +34,16 @@ func (gp *GameProcessor) executeTrumpCommand(command string, player *switchers.P
 
 		for _, team := range round.Teams {
 			gp.notifyTeam(team, team.GatheringTask.Text)
-			gp.updateTeamMemberStates(team, playerStateGathering)
+			gp.updateTeamMemberStates(team, playerStateInGame)
 		}
 
 		response = "Начался новый раунд."
 	case commandResign:
-		player.Trump = false
-		response = "Отставка принята."
+		if err := gp.PlayerRepository.SetTrump(player, false); err != nil {
+			response = fmt.Sprintf("Произошла ошибка в процедуре отставки: %s", err)
+		} else {
+			response = "Отставка принята."
+		}
 	}
 
 	gp.Bot.SendMessage(player.ID, response)

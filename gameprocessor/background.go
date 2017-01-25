@@ -20,6 +20,9 @@ func (gp *GameProcessor) roundDeactivator() error {
 			if round.ID == "" {
 				break
 			}
+			if time.Now().Before(round.StartTime.Add(time.Minute * 5)) {
+				break
+			}
 			for _, team := range round.Teams {
 				if team.State == teamStateGathering || team.State == teamStatePlaying || team.State == teamStateModeration {
 					break S
@@ -54,14 +57,14 @@ func (gp *GameProcessor) deadlineEnforcer() error {
 			now := time.Now()
 			for i, team := range round.Teams {
 				if team.State == teamStateGathering && now.After(team.GatheringDeadline) {
-					team.State = teamStateLost
-					if err = gp.RoundRepository.SaveTeam(round, i, team); err != nil {
+					if err = gp.RoundRepository.SetTeamState(round, i, teamStateLost); err != nil {
 						gp.Logger.Log("msg", "failed to save timeouted team (gathering)", "index", i, "error", err)
+						continue
 					} else {
 						gp.Logger.Log("msg", "timeouted a team (gathering)", "index", i)
 						gp.notifyTrumps(fmt.Sprintf("У команды %d закончилось время на сборы, они проиграли.", i))
 					}
-					gp.notifyTeam(team, "Время вышло :( Этот раунд вы проиграли, но в следующий раз повезет! Ждите следующий раунд.")
+					gp.notifyTeam(team, "Время вышло :( Этот раунд вы проиграли, потому что не собрали команду вовремя. Но в следующий раз повезет! Ждите следующий раунд.")
 					gp.updateTeamMemberStates(team, playerStateIdle)
 				}
 			}

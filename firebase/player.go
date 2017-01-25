@@ -58,22 +58,58 @@ func (pr *PlayerRepository) GetAllTrumps() (map[string]*switchers.Player, error)
 	return players, nil
 }
 
-// SetPlayerState sets player state
-func (pr *PlayerRepository) SetPlayerState(playerID string, state string) error {
-	ref, err := pr.firebase.Ref("players/" + playerID + "/State")
+// SetState sets player state
+func (pr *PlayerRepository) SetState(player *switchers.Player, state string) error {
+	ref, err := pr.firebase.Ref("players/" + player.ID + "/State")
 	if err != nil {
 		return err
 	}
 
-	return ref.Set(state)
+	err = ref.Set(state)
+	if err == nil {
+		player.State = state
+	}
+	return err
 }
 
-// SavePlayer saves player profile
-func (pr *PlayerRepository) SavePlayer(player *switchers.Player) error {
-	ref, err := pr.firebase.Ref("players/" + player.ID)
+// SetName sets player name
+func (pr *PlayerRepository) SetName(player *switchers.Player, name string) error {
+	ref, err := pr.firebase.Ref("players/" + player.ID + "/Name")
 	if err != nil {
 		return err
 	}
 
-	return ref.Set(player)
+	err = ref.Set(name)
+	if err == nil {
+		player.Name = name
+	}
+	return err
+}
+
+// SetPaused sets player paused
+func (pr *PlayerRepository) SetPaused(player *switchers.Player, paused bool) error {
+	ref, err := pr.firebase.Ref("players/" + player.ID + "/Paused")
+	if err != nil {
+		return err
+	}
+
+	err = ref.Set(paused)
+	if err == nil {
+		player.Paused = paused
+	}
+	return err
+}
+
+// SetTrump sets player Trump
+func (pr *PlayerRepository) SetTrump(player *switchers.Player, trump bool) error {
+	ref, err := pr.firebase.Ref("players/" + player.ID + "/Trump")
+	if err != nil {
+		return err
+	}
+
+	err = ref.Set(trump)
+	if err == nil {
+		player.Trump = trump
+	}
+	return err
 }
