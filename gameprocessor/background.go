@@ -58,7 +58,7 @@ func (gp *GameProcessor) deadlineEnforcer() error {
 		TEAMLOOP:
 			for i, team := range round.Teams {
 				if team.State == teamStateGathering {
-					if len(team.ActualPlayers) >= teamQuorumSize {
+					if len(team.ActualPlayers) >= gp.TeamQuorum {
 						if team.MissingPlayersDeadline.IsZero() {
 							if err = gp.RoundRepository.SetTeamMissingPlayersDeadline(round, i, now.Add(1*time.Minute)); err != nil {
 								gp.Logger.Log("msg", "failed to set gathered team actual deadline", "index", i, "error", err)

@@ -12,9 +12,6 @@ const (
 	playerStateIdle    = "idle"
 	playerStateInGame  = "ingame"
 
-	teamMinSize    = 6
-	teamQuorumSize = 4
-
 	teamStateGathering  = "gathering"
 	teamStatePlaying    = "playing"
 	teamStateModeration = "moderation"
@@ -32,6 +29,8 @@ const (
 // GameProcessor contains all in-game logic
 type GameProcessor struct {
 	TrumpCode        string
+	TeamQuorum       int
+	TeamMinSize      int
 	PlayerRepository switchers.PlayerRepository
 	RoundRepository  switchers.RoundRepository
 	TaskRepository   switchers.TaskRepository

@@ -24,7 +24,9 @@ func main() {
 		TelegramToken string `short:"t" long:"telegram-token" description:"Telegram token" env:"SWITCHERSBOT_TELEGRAM_TOKEN"`
 		FirebaseToken string `short:"f" long:"firebase-token" description:"Firebase token" env:"SWITCHERSBOT_FIREBASE_TOKEN"`
 		FirebaseURL   string `short:"u" long:"firebase-url" description:"Firebase URL" env:"SWITCHERSBOT_FIREBASE_URL"`
-		TrumpCode     string `short:"d" long:"trump-code" description:"Secret command to become Trump" env:"SWITCHERSBOT_TRUMP_CODE"`
+		TrumpCode     string `short:"d" long:"trump-code" description:"secret command to become Trump" env:"SWITCHERSBOT_TRUMP_CODE"`
+		TeamQuorum    int    `short:"q" long:"team-quorum" description:"how many team members must gather to receive an actual task" default:"4"`
+		TeamMinSize   int    `short:"s" long:"team-min-size" description:"minimum size of a team (they can be up to 2x-1 bigger, though)" default:"6"`
 	}
 	if _, err := flags.Parse(&opts); err != nil {
 		os.Exit(0)
@@ -73,6 +75,8 @@ func main() {
 
 	gameProcessor := &gameprocessor.GameProcessor{
 		TrumpCode:        opts.TrumpCode,
+		TeamQuorum:       opts.TeamQuorum,
+		TeamMinSize:      opts.TeamMinSize,
 		PlayerRepository: playerRepository,
 		RoundRepository:  roundRepository,
 		TaskRepository:   taskRepository,

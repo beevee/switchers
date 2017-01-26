@@ -58,8 +58,8 @@ func (gp *GameProcessor) generateRound() (*switchers.Round, error) {
 		eligiblePlayers[i], eligiblePlayers[j] = eligiblePlayers[j], eligiblePlayers[i]
 	}
 
-	teamCount := len(eligiblePlayers) / teamMinSize
-	gp.Logger.Log("msg", "calculated team count", "count", teamCount, "minsize", teamMinSize)
+	teamCount := len(eligiblePlayers) / gp.TeamMinSize
+	gp.Logger.Log("msg", "calculated team count", "count", teamCount, "minsize", gp.TeamMinSize)
 	if teamCount == 0 {
 		return nil, errors.New("not enough players to form a single team")
 	}
