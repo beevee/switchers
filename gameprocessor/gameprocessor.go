@@ -26,6 +26,7 @@ const (
 	commandSetName = "/setname"
 	commandPause   = "/pause"
 	commandResume  = "/resume"
+	commandLeaders = "/leaders"
 )
 
 // GameProcessor contains all in-game logic

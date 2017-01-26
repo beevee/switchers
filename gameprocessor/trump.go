@@ -88,6 +88,21 @@ func (gp *GameProcessor) executeTrumpCommand(command string, player *switchers.P
 			}
 		}
 
+	case commandLeaders:
+		leaders, err := gp.PlayerRepository.GetTop(500)
+		if err != nil {
+			gp.Bot.SendMessage(player.ID, fmt.Sprintf("Произошла ошибка при чтении списка игроков: %s", err))
+			return
+		}
+		var response string
+		i := 1
+		for _, leader := range leaders {
+			response += fmt.Sprintf("%d. %s — %d\n", i, leader.Name, leader.Score)
+			i++
+		}
+		gp.Bot.SendMessage(player.ID, response)
+		return
+
 	case commandResign:
 		if err := gp.PlayerRepository.SetTrump(player, false); err != nil {
 			gp.Bot.SendMessage(player.ID, fmt.Sprintf("Произошла ошибка в процедуре отставки: %s", err))
@@ -97,7 +112,7 @@ func (gp *GameProcessor) executeTrumpCommand(command string, player *switchers.P
 		return
 	}
 
-	gp.Bot.SendMessage(player.ID, fmt.Sprintf("Добро пожаловать, господин президент. Издайте какой-нибудь указ:\n\n%s — запустить новый раунд\n%s — модерировать что-нибудь\n%s — подать в отставку", commandNewRound, commandModerate, commandResign))
+	gp.Bot.SendMessage(player.ID, fmt.Sprintf("Добро пожаловать, господин президент. Издайте какой-нибудь указ:\n\n%s — запустить новый раунд\n%s — модерировать что-нибудь\n%s — посмотреть очки игроков\n%s — подать в отставку", commandNewRound, commandModerate, commandLeaders, commandResign))
 }
 
 func (gp *GameProcessor) notifyTrumps(message string) {

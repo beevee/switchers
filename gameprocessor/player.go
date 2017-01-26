@@ -50,12 +50,28 @@ func (gp *GameProcessor) executePlayerCommand(command string, player *switchers.
 		return
 
 	case playerStateIdle:
-		if command == "/setname" {
+		if command == commandSetName {
 			if err := gp.PlayerRepository.SetState(player, playerStateAskName); err != nil {
 				gp.Bot.SendMessage(player.ID, somethingWrongResponse)
 				return
 			}
 			gp.Bot.SendMessage(player.ID, "Напиши свое имя. Важно, чтобы другие участники могли тебя узнать, так что не пиши ерунду.")
+			return
+		}
+
+		if command == commandLeaders {
+			leaders, err := gp.PlayerRepository.GetTop(5)
+			if err != nil {
+				gp.Bot.SendMessage(player.ID, somethingWrongResponse)
+				return
+			}
+			response := "Вот кто заработал больше всего очков в Свитчерах:\n\n"
+			i := 1
+			for _, leader := range leaders {
+				response += fmt.Sprintf("%d. %s — %d\n", i, leader.Name, leader.Score)
+				i++
+			}
+			gp.Bot.SendMessage(player.ID, fmt.Sprintf("%s\nА у тебя к этому времени накопилось всего %d.", response, player.Score))
 			return
 		}
 
@@ -119,5 +135,5 @@ func (gp *GameProcessor) executePlayerCommand(command string, player *switchers.
 		}
 	}
 
-	gp.Bot.SendMessage(player.ID, fmt.Sprintf("Жди инструкции или напиши какую-нибудь команду. Я понимаю:\n\n%s — изменить имя\n%s — приостановить участие в игре", commandSetName, commandPause))
+	gp.Bot.SendMessage(player.ID, fmt.Sprintf("Жди инструкции или напиши какую-нибудь команду. Я понимаю:\n\n%s — изменить имя\n%s — приостановить участие в игре\n%s — посмотреть лидеров", commandSetName, commandPause, commandLeaders))
 }

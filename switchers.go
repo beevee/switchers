@@ -7,6 +7,7 @@ type PlayerRepository interface {
 	GetOrCreatePlayer(ID string) (*Player, bool, error)
 	GetAllPlayers() (map[string]*Player, error)
 	GetAllTrumps() (map[string]*Player, error)
+	GetTop(count int) ([]*Player, error)
 	SetState(player *Player, state string) error
 	SetPaused(player *Player, paused bool) error
 	SetTrump(player *Player, trump bool) error

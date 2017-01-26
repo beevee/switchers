@@ -1,6 +1,10 @@
 package firebase
 
-import "github.com/beevee/switchers"
+import (
+	"sort"
+
+	"github.com/beevee/switchers"
+)
 
 // PlayerRepository persists player information in Firebase
 type PlayerRepository struct {
@@ -56,6 +60,32 @@ func (pr *PlayerRepository) GetAllTrumps() (map[string]*switchers.Player, error)
 		return nil, err
 	}
 	return players, nil
+}
+
+type playerList []*switchers.Player
+
+func (p playerList) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
+func (p playerList) Len() int           { return len(p) }
+func (p playerList) Less(i, j int) bool { return p[i].Score < p[j].Score }
+
+// GetTop returns top scoring players
+func (pr *PlayerRepository) GetTop(count int) ([]*switchers.Player, error) {
+	ref, err := pr.firebase.Ref("players")
+	if err != nil {
+		return nil, err
+	}
+
+	var players map[string]*switchers.Player
+	if err = ref.OrderBy("Score").LimitToLast(int64(count)).Value(&players); err != nil {
+		return nil, err
+	}
+
+	list := make(playerList, 0, len(players))
+	for _, player := range players {
+		list = append(list, player)
+	}
+	sort.Sort(sort.Reverse(list))
+	return list, nil
 }
 
 // SetState sets player state
