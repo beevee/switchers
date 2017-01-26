@@ -14,25 +14,6 @@ type RoundRepository struct {
 	Repository
 }
 
-// CreateActiveRound creates new active round
-func (rr *RoundRepository) CreateActiveRound() (*switchers.Round, error) {
-	round := &switchers.Round{
-		ID:        "active",
-		StartTime: time.Now(),
-	}
-
-	ref, err := rr.firebase.Ref("rounds/active")
-	if err != nil {
-		return nil, err
-	}
-
-	if err = ref.Set(round); err != nil {
-		return nil, err
-	}
-
-	return round, nil
-}
-
 // GetActiveRound looks up active round and returns it
 func (rr *RoundRepository) GetActiveRound() (*switchers.Round, error) {
 	ref, err := rr.firebase.Ref("rounds/active")
@@ -54,11 +35,15 @@ func (rr *RoundRepository) DeactivateRound(round *switchers.Round) error {
 	}
 
 	round.ID = uuid.NewV4().String()
-	if err := rr.SaveRound(round); err != nil {
+	ref, err := rr.firebase.Ref("rounds/" + round.ID)
+	if err != nil {
+		return err
+	}
+	if err = ref.Set(round); err != nil {
 		return err
 	}
 
-	ref, err := rr.firebase.Ref("rounds/active")
+	ref, err = rr.firebase.Ref("rounds/active")
 	if err != nil {
 		return err
 	}
@@ -66,8 +51,9 @@ func (rr *RoundRepository) DeactivateRound(round *switchers.Round) error {
 	return ref.Remove()
 }
 
-// SaveRound saves round
-func (rr *RoundRepository) SaveRound(round *switchers.Round) error {
+// SaveActiveRound saves active round
+func (rr *RoundRepository) SaveActiveRound(round *switchers.Round) error {
+	round.ID = "active"
 	ref, err := rr.firebase.Ref("rounds/" + round.ID)
 	if err != nil {
 		return err

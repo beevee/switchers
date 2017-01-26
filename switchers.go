@@ -26,10 +26,9 @@ type Player struct {
 
 // RoundRepository persists round information
 type RoundRepository interface {
-	CreateActiveRound() (*Round, error)
 	GetActiveRound() (*Round, error)
 	DeactivateRound(*Round) error
-	SaveRound(round *Round) error
+	SaveActiveRound(round *Round) error
 	AddTeamMemberToActual(round *Round, index int, playerID string) error
 	AddTeamMemberToMissing(round *Round, index int, playerID string) error
 	SetTeamState(round *Round, index int, state string) error
@@ -42,7 +41,7 @@ type RoundRepository interface {
 type Round struct {
 	ID        string
 	StartTime time.Time
-	Teams     []Team
+	Teams     []*Team
 }
 
 // Team is a team

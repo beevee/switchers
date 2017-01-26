@@ -3,13 +3,15 @@ package gameprocessor
 import (
 	"fmt"
 	"time"
+
+	"github.com/beevee/switchers"
 )
 
 func (gp *GameProcessor) roundDeactivator() error {
-	ticker := time.NewTicker(time.Minute)
+	ticker := time.NewTicker(10 * time.Second)
 
 	for {
-	S:
+	SELECT:
 		select {
 		case <-ticker.C:
 			round, err := gp.RoundRepository.GetActiveRound()
@@ -20,12 +22,9 @@ func (gp *GameProcessor) roundDeactivator() error {
 			if round.ID == "" {
 				break
 			}
-			if time.Now().Before(round.StartTime.Add(time.Minute * 5)) {
-				break
-			}
 			for _, team := range round.Teams {
 				if team.State == teamStateGathering || team.State == teamStatePlaying || team.State == teamStateModeration {
-					break S
+					break SELECT
 				}
 			}
 			if err = gp.RoundRepository.DeactivateRound(round); err != nil {
@@ -41,7 +40,7 @@ func (gp *GameProcessor) roundDeactivator() error {
 }
 
 func (gp *GameProcessor) deadlineEnforcer() error {
-	ticker := time.NewTicker(time.Minute)
+	ticker := time.NewTicker(10 * time.Second)
 
 	for {
 		select {
@@ -85,10 +84,10 @@ func (gp *GameProcessor) deadlineEnforcer() error {
 								if err = gp.RoundRepository.AddTeamMemberToMissing(round, i, playerID); err != nil {
 									gp.Logger.Log("msg", "failed to add player to missing", "playerid", playerID, "index", i, "error", err)
 								}
+								gp.PlayerRepository.SetState(&switchers.Player{ID: playerID}, playerStateIdle)
+								gp.Bot.SendMessage(playerID, "Нужно было вовремя написать \"тут\", а у тебя не получилось. Жди теперь следующий раунд.")
 							}
 						}
-						gp.updateMissingTeamMemberStates(team, playerStateIdle)
-						gp.notifyMissingTeamMembers(team, "Нужно было вовремя написать \"тут\". Теперь уже ничего не выйдет, жди следующий раунд.")
 						continue
 					}
 

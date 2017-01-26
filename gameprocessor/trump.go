@@ -9,37 +9,10 @@ import (
 func (gp *GameProcessor) executeTrumpCommand(command string, player *switchers.Player) {
 	switch command {
 	case commandNewRound:
-		ar, err := gp.RoundRepository.GetActiveRound()
-		if ar.ID != "" {
-			gp.Bot.SendMessage(player.ID, "Сейчас уже идет раунд, новый начать нельзя.")
+		if err := gp.startNewRound(); err != nil {
+			gp.Bot.SendMessage(player.ID, fmt.Sprintf("Произошла ошибка при генерации нового раунда: %s", err))
 			return
 		}
-		if err != nil {
-			gp.Bot.SendMessage(player.ID, fmt.Sprintf("Произошла ошибка при поиске активного раунда: %s", err))
-			return
-		}
-
-		round, err := gp.RoundRepository.CreateActiveRound()
-		if err != nil {
-			gp.Bot.SendMessage(player.ID, fmt.Sprintf("Произошла ошибка при создании активного раунда: %s", err))
-			return
-		}
-
-		if err = gp.populateRound(round); err != nil {
-			gp.Bot.SendMessage(player.ID, fmt.Sprintf("Произошла ошибка при генерации активного раунда: %s", err))
-			return
-		}
-
-		if err = gp.RoundRepository.SaveRound(round); err != nil {
-			gp.Bot.SendMessage(player.ID, fmt.Sprintf("Произошла ошибка при сохранении сгенерированного активного раунда: %s", err))
-			return
-		}
-
-		for _, team := range round.Teams {
-			gp.notifyGatheringTeamMembers(team, team.GatheringTask.Text)
-			gp.updateGatheringTeamMemberStates(team, playerStateInGame)
-		}
-
 		gp.Bot.SendMessage(player.ID, "Начался новый раунд.")
 		return
 

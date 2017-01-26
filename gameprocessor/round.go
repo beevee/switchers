@@ -8,10 +8,40 @@ import (
 	"github.com/beevee/switchers"
 )
 
-func (gp *GameProcessor) populateRound(round *switchers.Round) error {
-	players, err := gp.PlayerRepository.GetAllPlayers()
+func (gp *GameProcessor) startNewRound() error {
+	ar, err := gp.RoundRepository.GetActiveRound()
+	if ar.ID != "" {
+		return errors.New("cannot create new active round while another round is active")
+	}
 	if err != nil {
 		return err
+	}
+
+	round, err := gp.generateRound()
+	if err != nil {
+		return err
+	}
+
+	if err = gp.RoundRepository.SaveActiveRound(round); err != nil {
+		return err
+	}
+
+	for _, team := range round.Teams {
+		gp.updateGatheringTeamMemberStates(team, playerStateInGame)
+		gp.notifyGatheringTeamMembers(team, team.GatheringTask.Text)
+	}
+
+	return nil
+}
+
+func (gp *GameProcessor) generateRound() (*switchers.Round, error) {
+	round := &switchers.Round{
+		StartTime: time.Now(),
+	}
+
+	players, err := gp.PlayerRepository.GetAllPlayers()
+	if err != nil {
+		return nil, err
 	}
 	gp.Logger.Log("msg", "retrieved players for new round", "count", len(players))
 
@@ -31,15 +61,15 @@ func (gp *GameProcessor) populateRound(round *switchers.Round) error {
 	teamCount := len(eligiblePlayers) / teamMinSize
 	gp.Logger.Log("msg", "calculated team count", "count", teamCount, "minsize", teamMinSize)
 	if teamCount == 0 {
-		return errors.New("not enough players to form a single team")
+		return nil, errors.New("not enough players to form a single team")
 	}
 
 	gatheringTasks, err := gp.TaskRepository.GetAllGatheringTasks()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if len(gatheringTasks) < teamCount {
-		return errors.New("not enough gathering tasks for a full round")
+		return nil, errors.New("not enough gathering tasks for a full round")
 	}
 	gp.Logger.Log("msg", "retrieved gathering tasks for new round", "count", len(gatheringTasks))
 
@@ -51,10 +81,10 @@ func (gp *GameProcessor) populateRound(round *switchers.Round) error {
 
 	actualTasks, err := gp.TaskRepository.GetAllActualTasks()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if len(actualTasks) < teamCount {
-		return errors.New("not enough actual tasks for a full round")
+		return nil, errors.New("not enough actual tasks for a full round")
 	}
 	gp.Logger.Log("msg", "retrieved actual tasks for new round", "count", len(actualTasks))
 
@@ -64,13 +94,15 @@ func (gp *GameProcessor) populateRound(round *switchers.Round) error {
 		actualTasks[i], actualTasks[j] = actualTasks[j], actualTasks[i]
 	}
 
-	round.Teams = make([]switchers.Team, teamCount)
+	round.Teams = make([]*switchers.Team, teamCount)
 	for i := range round.Teams {
-		round.Teams[i].State = teamStateGathering
-		round.Teams[i].GatheringPlayers = make(map[string]switchers.Player)
-		round.Teams[i].GatheringTask = gatheringTasks[i]
-		round.Teams[i].ActualTask = actualTasks[i]
-		round.Teams[i].GatheringDeadline = round.StartTime.Add(time.Minute * time.Duration(gatheringTasks[i].TimeLimitMinutes))
+		round.Teams[i] = &switchers.Team{
+			State:             teamStateGathering,
+			GatheringPlayers:  make(map[string]switchers.Player),
+			GatheringTask:     gatheringTasks[i],
+			ActualTask:        actualTasks[i],
+			GatheringDeadline: round.StartTime.Add(time.Minute * time.Duration(gatheringTasks[i].TimeLimitMinutes)),
+		}
 	}
 	for i, player := range eligiblePlayers {
 		teamNumber := i % teamCount
@@ -78,5 +110,5 @@ func (gp *GameProcessor) populateRound(round *switchers.Round) error {
 	}
 	gp.Logger.Log("msg", "round population finished")
 
-	return nil
+	return round, nil
 }
