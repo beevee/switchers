@@ -114,6 +114,20 @@ func (pr *PlayerRepository) SetTrump(player *switchers.Player, trump bool) error
 	return err
 }
 
+// SetModeratingTeamIndex sets player Trump
+func (pr *PlayerRepository) SetModeratingTeamIndex(player *switchers.Player, index int) error {
+	ref, err := pr.firebase.Ref("players/" + player.ID + "/ModeratingTeamIndex")
+	if err != nil {
+		return err
+	}
+
+	err = ref.Set(index)
+	if err == nil {
+		player.ModeratingTeamIndex = index
+	}
+	return err
+}
+
 // IncreaseScore increases player score
 func (pr *PlayerRepository) IncreaseScore(player *switchers.Player) error {
 	ref, err := pr.firebase.Ref("players/" + player.ID + "/Score")

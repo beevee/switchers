@@ -7,10 +7,11 @@ import (
 )
 
 const (
-	playerStateNew     = ""
-	playerStateAskName = "askname"
-	playerStateIdle    = "idle"
-	playerStateInGame  = "ingame"
+	playerStateNew        = ""
+	playerStateAskName    = "askname"
+	playerStateIdle       = "idle"
+	playerStateInGame     = "ingame"
+	playerStateModerating = "moderating"
 
 	teamStateGathering  = "gathering"
 	teamStatePlaying    = "playing"
@@ -19,6 +20,7 @@ const (
 	teamStateLost       = "lost"
 
 	commandNewRound = "/newround"
+	commandModerate = "/moderate"
 	commandResign   = "/resign"
 
 	commandSetName = "/setname"

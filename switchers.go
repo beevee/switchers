@@ -11,17 +11,19 @@ type PlayerRepository interface {
 	SetPaused(player *Player, paused bool) error
 	SetTrump(player *Player, trump bool) error
 	SetName(player *Player, name string) error
+	SetModeratingTeamIndex(player *Player, index int) error
 	IncreaseScore(player *Player) error
 }
 
 // Player is a player
 type Player struct {
-	ID     string
-	Trump  bool
-	State  string
-	Name   string
-	Paused bool
-	Score  int
+	ID                  string
+	Trump               bool
+	State               string
+	Name                string
+	Paused              bool
+	Score               int
+	ModeratingTeamIndex int
 }
 
 // RoundRepository persists round information
