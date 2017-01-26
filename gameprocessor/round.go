@@ -3,6 +3,7 @@ package gameprocessor
 import (
 	"errors"
 	"math/rand"
+	"strings"
 	"time"
 
 	"github.com/beevee/switchers"
@@ -28,7 +29,7 @@ func (gp *GameProcessor) startNewRound() error {
 
 	for _, team := range round.Teams {
 		gp.updateGatheringTeamMemberStates(team, playerStateInGame)
-		gp.notifyGatheringTeamMembers(team, team.GatheringTask.Text)
+		gp.notifyGatheringTeamMembers(team, team.GatheringTask.Text+" Как только соберетесь, одновременно напишите \"тут\" в чат. Чтобы игра началась, достаточно четырех человек. Остальные не получат очки.")
 	}
 
 	return nil
@@ -107,6 +108,16 @@ func (gp *GameProcessor) generateRound() (*switchers.Round, error) {
 	for i, player := range eligiblePlayers {
 		teamNumber := i % teamCount
 		round.Teams[teamNumber].GatheringPlayers[player.ID] = *player
+	}
+
+	hhmm := time.Now().Format("15:04")
+	for i := range round.Teams {
+		round.Teams[i].GatheringTask.Text = strings.Replace(gatheringTasks[i].Text, "ЧЧ:ММ", hhmm, -1)
+		gatheringPlayerNames := make([]string, 0, len(round.Teams[i].GatheringPlayers))
+		for _, player := range round.Teams[i].GatheringPlayers {
+			gatheringPlayerNames = append(gatheringPlayerNames, player.Name)
+		}
+		round.Teams[i].GatheringTask.Text = strings.Replace(round.Teams[i].GatheringTask.Text, "имена_игроков", strings.Join(gatheringPlayerNames, ", "), 1)
 	}
 	gp.Logger.Log("msg", "round population finished")
 
