@@ -32,7 +32,7 @@ func (gp *GameProcessor) roundDeactivator() error {
 				break
 			}
 			gp.Logger.Log("msg", "deactivated a round", "newid", round.ID)
-			gp.notifyTrumps("Активный раунд завершился.")
+			gp.notifyTrumps(responseTrumpActiveRoundFinished)
 		case <-gp.tomb.Dying():
 			return nil
 		}
@@ -77,15 +77,15 @@ func (gp *GameProcessor) deadlineEnforcer() error {
 							continue
 						}
 						gp.Logger.Log("msg", "team quorum gathered", "index", i, "count", len(team.ActualPlayers))
-						gp.notifyTrumps(fmt.Sprintf("Команда %d набрала кворум, даем задачу.", i))
-						gp.notifyActualTeamMembers(team, team.ActualTask.Text)
+						gp.notifyTrumps(fmt.Sprintf(responseTrumpTeamGotQuorum, i))
+						gp.notifyActualTeamMembers(team, team.ActualTask.Text+responseActualTaskSuffix)
 						for playerID := range team.GatheringPlayers {
 							if _, exists := team.ActualPlayers[playerID]; !exists {
 								if err = gp.RoundRepository.AddTeamMemberToMissing(round, i, playerID); err != nil {
 									gp.Logger.Log("msg", "failed to add player to missing", "playerid", playerID, "index", i, "error", err)
 								}
 								gp.PlayerRepository.SetState(&switchers.Player{ID: playerID}, playerStateIdle)
-								gp.Bot.SendMessage(playerID, "Нужно было вовремя написать \"тут\", а у тебя не получилось. Жди теперь следующий раунд.")
+								gp.Bot.SendMessage(playerID, responsePlayerFailedToGather)
 							}
 						}
 						continue
@@ -97,9 +97,9 @@ func (gp *GameProcessor) deadlineEnforcer() error {
 							continue
 						}
 						gp.Logger.Log("msg", "timeouted a team (gathering)", "index", i)
-						gp.notifyTrumps(fmt.Sprintf("У команды %d закончилось время на сборы, они проиграли.", i))
+						gp.notifyTrumps(fmt.Sprintf(responseTrumpTeamFailedToGather, i))
 						gp.updateGatheringTeamMemberStates(team, playerStateIdle)
-						gp.notifyGatheringTeamMembers(team, "Время вышло :( Этот раунд вы проиграли, потому что не собрали команду вовремя. Но в следующий раз повезет! Ждите следующий раунд.")
+						gp.notifyGatheringTeamMembers(team, responseTeamFailedToGather)
 					}
 				}
 
@@ -112,10 +112,10 @@ func (gp *GameProcessor) deadlineEnforcer() error {
 									continue TEAMLOOP
 								}
 								gp.Logger.Log("msg", "team won by answering correctly", "index", i, "answer", team.Answer)
-								gp.notifyTrumps(fmt.Sprintf("Команда %d выиграла, дав правильный ответ.", i))
+								gp.notifyTrumps(fmt.Sprintf(responseTrumpTeamWon, i))
 								gp.updateActualTeamMemberStates(team, playerStateIdle)
 								gp.increaseActualTeamMemberScores(team)
-								gp.notifyActualTeamMembers(team, "Вы победили и получаете кучу очков! Ждите следующий раунд.")
+								gp.notifyActualTeamMembers(team, responseTeamWon)
 								continue TEAMLOOP
 							}
 						}
@@ -125,8 +125,8 @@ func (gp *GameProcessor) deadlineEnforcer() error {
 							continue
 						}
 						gp.Logger.Log("msg", "team answer is available for moderation", "index", i, "answer", team.Answer)
-						gp.notifyTrumps(fmt.Sprintf("Команда %d дала ответ, требуется модерация.", i))
-						gp.notifyActualTeamMembers(team, "Ваш ответ направлен на модерацию, ждите решения.")
+						gp.notifyTrumps(fmt.Sprintf(responseTrumpModerationRequired, i))
+						gp.notifyActualTeamMembers(team, responseModerationRequired)
 						continue
 					}
 
@@ -136,9 +136,9 @@ func (gp *GameProcessor) deadlineEnforcer() error {
 							continue
 						}
 						gp.Logger.Log("msg", "timeouted a team (playing)", "index", i)
-						gp.notifyTrumps(fmt.Sprintf("У команды %d закончилось время на ответ, они проиграли.", i))
+						gp.notifyTrumps(fmt.Sprintf(responseTrumpTeamFailedToAnswer, i))
 						gp.updateActualTeamMemberStates(team, playerStateIdle)
-						gp.notifyActualTeamMembers(team, "Время вышло :( Этот раунд вы проиграли, потому что не ответили на задачу вовремя. Но в следующий раз повезет! Ждите следующий раунд.")
+						gp.notifyActualTeamMembers(team, responseTeamFailedToAnswer)
 					}
 				}
 			}

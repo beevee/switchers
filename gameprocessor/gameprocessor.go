@@ -6,29 +6,6 @@ import (
 	"github.com/beevee/switchers"
 )
 
-const (
-	playerStateNew        = ""
-	playerStateAskName    = "askname"
-	playerStateIdle       = "idle"
-	playerStateInGame     = "ingame"
-	playerStateModerating = "moderating"
-
-	teamStateGathering  = "gathering"
-	teamStatePlaying    = "playing"
-	teamStateModeration = "moderation"
-	teamStateWon        = "won"
-	teamStateLost       = "lost"
-
-	commandNewRound = "/newround"
-	commandModerate = "/moderate"
-	commandResign   = "/resign"
-
-	commandSetName = "/setname"
-	commandPause   = "/pause"
-	commandResume  = "/resume"
-	commandLeaders = "/leaders"
-)
-
 // GameProcessor contains all in-game logic
 type GameProcessor struct {
 	TrumpCode        string
@@ -56,10 +33,6 @@ func (gp *GameProcessor) Stop() error {
 	return gp.tomb.Wait()
 }
 
-const (
-	somethingWrongResponse = "Что-то пошло не так. Попробуй еще раз."
-)
-
 // ExecuteCommand takes text command from a player, updates internal state and returns response
 func (gp *GameProcessor) ExecuteCommand(command string, playerID string) {
 	player, created, err := gp.PlayerRepository.GetOrCreatePlayer(playerID)
@@ -72,7 +45,7 @@ func (gp *GameProcessor) ExecuteCommand(command string, playerID string) {
 
 	if command == gp.TrumpCode {
 		if err := gp.PlayerRepository.SetTrump(player, true); err != nil {
-			gp.Bot.SendMessage(player.ID, somethingWrongResponse)
+			gp.Bot.SendMessage(player.ID, responseSomethingWrong)
 			gp.Logger.Log("msg", "failed to make player Trump", "error", err)
 			return
 		}

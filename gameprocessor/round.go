@@ -29,7 +29,7 @@ func (gp *GameProcessor) startNewRound() error {
 
 	for _, team := range round.Teams {
 		gp.updateGatheringTeamMemberStates(team, playerStateInGame)
-		gp.notifyGatheringTeamMembers(team, team.GatheringTask.Text+" Как только соберетесь, одновременно напишите \"тут\" в чат. Чтобы игра началась, достаточно четырех человек. Остальные не получат очки.")
+		gp.notifyGatheringTeamMembers(team, team.GatheringTask.Text+responseGatheringTaskSuffix)
 	}
 
 	return nil
