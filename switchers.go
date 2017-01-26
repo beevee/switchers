@@ -30,8 +30,10 @@ type RoundRepository interface {
 	GetActiveRound() (*Round, error)
 	DeactivateRound(*Round) error
 	SaveRound(round *Round) error
-	SetPlayerGathered(round *Round, index int, playerID string) error
+	AddTeamMemberToActual(round *Round, index int, playerID string) error
+	AddTeamMemberToMissing(round *Round, index int, playerID string) error
 	SetTeamState(round *Round, index int, state string) error
+	SetTeamMissingPlayersDeadline(round *Round, index int, deadline time.Time) error
 	SetTeamActualDeadline(round *Round, index int, deadline time.Time) error
 	SetTeamAnswer(round *Round, index int, answer string) error
 }
@@ -45,13 +47,16 @@ type Round struct {
 
 // Team is a team
 type Team struct {
-	State             string
-	PlayerIDs         map[string]bool
-	GatheringTask     GatheringTask
-	GatheringDeadline time.Time
-	ActualTask        ActualTask
-	ActualDeadline    time.Time
-	Answer            string
+	State                  string
+	GatheringPlayers       map[string]Player
+	ActualPlayers          map[string]Player
+	MissingPlayers         map[string]Player
+	GatheringTask          GatheringTask
+	GatheringDeadline      time.Time
+	MissingPlayersDeadline time.Time
+	ActualTask             ActualTask
+	ActualDeadline         time.Time
+	Answer                 string
 }
 
 // TaskRepository persists task information

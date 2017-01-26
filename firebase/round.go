@@ -1,6 +1,7 @@
 package firebase
 
 import (
+	"fmt"
 	"strconv"
 	"time"
 
@@ -75,16 +76,40 @@ func (rr *RoundRepository) SaveRound(round *switchers.Round) error {
 	return ref.Set(round)
 }
 
-// SetPlayerGathered sets flag that a single player in team has gathered
-func (rr *RoundRepository) SetPlayerGathered(round *switchers.Round, index int, playerID string) error {
-	ref, err := rr.firebase.Ref("rounds/" + round.ID + "/Teams/" + strconv.FormatInt(int64(index), 10) + "/PlayerIDs/" + playerID)
+// AddTeamMemberToActual adds gathering player to actual team
+func (rr *RoundRepository) AddTeamMemberToActual(round *switchers.Round, index int, playerID string) error {
+	player, exists := round.Teams[index].GatheringPlayers[playerID]
+	if !exists {
+		return fmt.Errorf("player %s does not belong to team %d", playerID, index)
+	}
+
+	ref, err := rr.firebase.Ref("rounds/" + round.ID + "/Teams/" + strconv.FormatInt(int64(index), 10) + "/ActualPlayers/" + playerID)
 	if err != nil {
 		return err
 	}
 
-	err = ref.Set(true)
+	err = ref.Set(player)
 	if err != nil {
-		round.Teams[index].PlayerIDs[playerID] = true
+		round.Teams[index].ActualPlayers[playerID] = player
+	}
+	return err
+}
+
+// AddTeamMemberToMissing adds gathering player to missing
+func (rr *RoundRepository) AddTeamMemberToMissing(round *switchers.Round, index int, playerID string) error {
+	player, exists := round.Teams[index].GatheringPlayers[playerID]
+	if !exists {
+		return fmt.Errorf("player %s does not belong to team %d", playerID, index)
+	}
+
+	ref, err := rr.firebase.Ref("rounds/" + round.ID + "/Teams/" + strconv.FormatInt(int64(index), 10) + "/MissingPlayers/" + playerID)
+	if err != nil {
+		return err
+	}
+
+	err = ref.Set(player)
+	if err != nil {
+		round.Teams[index].MissingPlayers[playerID] = player
 	}
 	return err
 }
@@ -99,6 +124,20 @@ func (rr *RoundRepository) SetTeamState(round *switchers.Round, index int, state
 	err = ref.Set(state)
 	if err != nil {
 		round.Teams[index].State = state
+	}
+	return err
+}
+
+// SetTeamMissingPlayersDeadline sets team waiting deadline after quorum
+func (rr *RoundRepository) SetTeamMissingPlayersDeadline(round *switchers.Round, index int, deadline time.Time) error {
+	ref, err := rr.firebase.Ref("rounds/" + round.ID + "/Teams/" + strconv.FormatInt(int64(index), 10) + "/MissingPlayersDeadline")
+	if err != nil {
+		return err
+	}
+
+	err = ref.Set(deadline)
+	if err != nil {
+		round.Teams[index].MissingPlayersDeadline = deadline
 	}
 	return err
 }

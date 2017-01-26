@@ -68,7 +68,12 @@ func (gp *GameProcessor) executePlayerCommand(command string, player *switchers.
 		}
 		playersTeamIndex := -1
 		for i, team := range round.Teams {
-			_, exists := team.PlayerIDs[player.ID]
+			var exists bool
+			if team.State == teamStateGathering {
+				_, exists = team.GatheringPlayers[player.ID]
+			} else {
+				_, exists = team.ActualPlayers[player.ID]
+			}
 			if exists {
 				playersTeamIndex = i
 				break
@@ -80,9 +85,10 @@ func (gp *GameProcessor) executePlayerCommand(command string, player *switchers.
 			return
 		}
 
-		if round.Teams[playersTeamIndex].State == teamStateGathering {
+		switch round.Teams[playersTeamIndex].State {
+		case teamStateGathering:
 			if strings.ToLower(command) == "тут" {
-				if err = gp.RoundRepository.SetPlayerGathered(round, playersTeamIndex, player.ID); err != nil {
+				if err = gp.RoundRepository.AddTeamMemberToActual(round, playersTeamIndex, player.ID); err != nil {
 					gp.Bot.SendMessage(player.ID, somethingWrongResponse)
 					gp.Logger.Log("msg", "failed to set player gathered state", "playerid", player.ID, "teamindex", playersTeamIndex)
 					return
@@ -90,11 +96,10 @@ func (gp *GameProcessor) executePlayerCommand(command string, player *switchers.
 				gp.Bot.SendMessage(player.ID, "Ждем отстающих еще немного и начинаем.")
 				return
 			}
-			gp.Bot.SendMessage(player.ID, "Соберитесь в указанном месте. Как только соберетесь, каждый должен написать \"тут\".")
+			gp.Bot.SendMessage(player.ID, "Соберитесь в указанном месте. Как только соберетесь, все одновременно должны написать \"тут\".")
 			return
-		}
 
-		if round.Teams[playersTeamIndex].State == teamStatePlaying {
+		case teamStatePlaying:
 			if strings.ToLower(command) == "тут" {
 				gp.Bot.SendMessage(player.ID, "Все уже собрались, можно больше не писать \"тут\". Отвечай на задание.")
 				return
@@ -106,6 +111,10 @@ func (gp *GameProcessor) executePlayerCommand(command string, player *switchers.
 				return
 			}
 			gp.Bot.SendMessage(player.ID, "Ответ принят.")
+			return
+
+		case teamStateModeration:
+			gp.Bot.SendMessage(player.ID, "Ответ на модерации, жди решение.")
 			return
 		}
 	}
