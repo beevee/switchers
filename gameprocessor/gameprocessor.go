@@ -21,8 +21,7 @@ type GameProcessor struct {
 
 // Start initializes loops that make game go round
 func (gp *GameProcessor) Start() error {
-	gp.tomb.Go(gp.roundDeactivator)
-	gp.tomb.Go(gp.deadlineEnforcer)
+	gp.tomb.Go(gp.gameProgressor)
 
 	return nil
 }
