@@ -76,14 +76,15 @@ func (gp *GameProcessor) gameProgressor() error {
 				}
 
 				if team.State == teamStatePlaying {
-					if team.Answer != "" {
+					answer := team.Answer.Text
+					if answer != "" {
 						for _, correctAnswer := range team.ActualTask.CorrectAnswers {
-							if team.Answer == correctAnswer {
+							if answer == correctAnswer {
 								if err = gp.RoundRepository.SetTeamState(round, i, teamStateWon); err != nil {
 									gp.Logger.Log("msg", "failed to set won team state (playing)", "teamindex", i, "error", err)
 									continue TEAMLOOP
 								}
-								gp.Logger.Log("msg", "team won by answering correctly", "teamindex", i, "answer", team.Answer)
+								gp.Logger.Log("msg", "team won by answering correctly", "teamindex", i, "answer", answer)
 								gp.notifyTrumps(fmt.Sprintf(responseTrumpTeamWon, i))
 								gp.updateActualTeamMemberStates(team, playerStateIdle)
 								gp.increaseActualTeamMemberScores(team)
@@ -96,7 +97,7 @@ func (gp *GameProcessor) gameProgressor() error {
 							gp.Logger.Log("msg", "failed to set moderation team state (playing)", "teamindex", i, "error", err)
 							continue
 						}
-						gp.Logger.Log("msg", "team answer is available for moderation", "teamindex", i, "answer", team.Answer)
+						gp.Logger.Log("msg", "team answer is available for moderation", "teamindex", i, "answer", answer)
 						gp.notifyTrumps(fmt.Sprintf(responseTrumpModerationRequired, i))
 						gp.notifyActualTeamMembers(team, responseModerationRequired)
 						continue

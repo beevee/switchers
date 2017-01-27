@@ -37,7 +37,7 @@ type RoundRepository interface {
 	SetTeamState(round *Round, index int, state string) error
 	SetTeamMissingPlayersDeadline(round *Round, index int, deadline time.Time) error
 	SetTeamActualDeadline(round *Round, index int, deadline time.Time) error
-	SetTeamAnswer(round *Round, index int, answer string) error
+	SetTeamAnswer(round *Round, index int, answer *Answer) error
 }
 
 // Round is a round
@@ -58,7 +58,7 @@ type Team struct {
 	MissingPlayersDeadline time.Time
 	ActualTask             ActualTask
 	ActualDeadline         time.Time
-	Answer                 string
+	Answer                 Answer
 }
 
 // TaskRepository persists task information
@@ -73,6 +73,12 @@ type GatheringTask struct {
 	TimeLimitMinutes int
 }
 
+type Answer struct {
+	Text      string
+	OwnerID   string
+	MessageID int
+}
+
 // ActualTask is a task for team that gathered
 type ActualTask struct {
 	Text             string
@@ -83,9 +89,10 @@ type ActualTask struct {
 // Bot maintains communication with players
 type Bot interface {
 	SendMessage(ID string, message string)
+	ForwardMessage(ID string, messageID int, messageOwnerID string)
 }
 
 // GameProcessor contains all in-game logic
 type GameProcessor interface {
-	ExecuteCommand(command string, playerID string)
+	ExecuteCommand(command string, commandID int, playerID string)
 }

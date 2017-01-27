@@ -7,7 +7,8 @@ import (
 	"github.com/beevee/switchers"
 )
 
-func (gp *GameProcessor) executePlayerCommand(command string, player *switchers.Player) {
+func (gp *GameProcessor) executePlayerCommand(cmd Command, player *switchers.Player) {
+	command := cmd.Command;
 	if command == commandPause {
 		if err := gp.PlayerRepository.SetPaused(player, true); err != nil {
 			gp.Bot.SendMessage(player.ID, responseSomethingWrong)
@@ -121,7 +122,8 @@ func (gp *GameProcessor) executePlayerCommand(command string, player *switchers.
 				return
 			}
 
-			if err = gp.RoundRepository.SetTeamAnswer(round, playersTeamIndex, command); err != nil {
+			answer := switchers.Answer{MessageID: cmd.CommandID, Text: command, OwnerID: player.ID}
+			if err = gp.RoundRepository.SetTeamAnswer(round, playersTeamIndex, &answer); err != nil {
 				gp.Bot.SendMessage(player.ID, responseSomethingWrong)
 				gp.Logger.Log("msg", "failed to set team answer", "playerid", player.ID, "teamindex", playersTeamIndex, "answer", command)
 				return

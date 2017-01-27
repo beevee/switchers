@@ -18,7 +18,7 @@ func (pr *PlayerRepository) GetOrCreatePlayer(ID string) (*switchers.Player, boo
 		return nil, false, err
 	}
 
-	player := &switchers.Player{}
+	var player *switchers.Player = &switchers.Player{}
 	created := false
 	if err = ref.Value(player); err != nil {
 		return nil, false, err

@@ -20,6 +20,11 @@ type GameProcessor struct {
 	tomb                  tomb.Tomb
 }
 
+type Command struct {
+	Command   string
+	CommandID int
+}
+
 // Start initializes loops that make game go round
 func (gp *GameProcessor) Start() error {
 	gp.playerCommandChannels = make(map[string]chan string)
@@ -36,13 +41,13 @@ func (gp *GameProcessor) Stop() error {
 }
 
 // ExecuteCommand takes text command from a player and schedules it for execution in a separate channel for exch user
-func (gp *GameProcessor) ExecuteCommand(command string, playerID string) {
+func (gp *GameProcessor) ExecuteCommand(command string, commandID int, playerID string) {
 	_, exists := gp.playerCommandChannels[playerID]
 
 	if !exists {
 		gp.playerCommandChannels[playerID] = make(chan string, 1000)
 		gp.tomb.Go(func() error {
-			gp.playerCommandExecutor(playerID, gp.playerCommandChannels[playerID])
+			gp.playerCommandExecutor(playerID, commandID, gp.playerCommandChannels[playerID])
 			return nil
 		})
 		gp.Logger.Log("msg", "created new command executor goroutine for player", "playerid", playerID)
@@ -51,7 +56,7 @@ func (gp *GameProcessor) ExecuteCommand(command string, playerID string) {
 	gp.playerCommandChannels[playerID] <- command
 }
 
-func (gp *GameProcessor) playerCommandExecutor(playerID string, playerCommands <-chan string) {
+func (gp *GameProcessor) playerCommandExecutor(playerID string, commandID int, playerCommands <-chan string) {
 	for {
 		select {
 		case command := <-playerCommands:
@@ -71,10 +76,11 @@ func (gp *GameProcessor) playerCommandExecutor(playerID string, playerCommands <
 				}
 			}
 
+			cmd := Command{Command: command, CommandID: commandID}
 			if player.Trump {
-				gp.executeTrumpCommand(command, player)
+				gp.executeTrumpCommand(cmd, player)
 			} else {
-				gp.executePlayerCommand(command, player)
+				gp.executePlayerCommand(cmd, player)
 			}
 
 		case <-gp.tomb.Dying():

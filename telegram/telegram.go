@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
+	"errors"
 	"github.com/tucnak/telebot"
 	"gopkg.in/tomb.v2"
 
@@ -41,7 +41,7 @@ func (b *Bot) Start() error {
 					"lastname", message.Sender.LastName, "username", message.Sender.Username,
 					"chatid", message.Chat.ID, "message", message.Text)
 
-				b.GameProcessor.ExecuteCommand(message.Text, "telegram_"+strconv.FormatInt(message.Chat.ID, 10))
+				b.GameProcessor.ExecuteCommand(message.Text, message.ID, "telegram_"+strconv.FormatInt(message.Chat.ID, 10))
 			case <-b.tomb.Dying():
 				return nil
 			}
@@ -59,18 +59,45 @@ func (b *Bot) Stop() error {
 
 // SendMessage sends message to Telegram user
 func (b *Bot) SendMessage(playerID string, message string) {
-	if !strings.HasPrefix(playerID, "telegram_") {
-		b.Logger.Log("msg", "cannot send messages to a non-Telegram user", "playerid", playerID, "message", message)
-		return
-	}
 
-	chatID, err := strconv.ParseInt(playerID[9:], 10, 64)
+	chatID, err := b.ParseUserID(playerID)
 	if err != nil {
-		b.Logger.Log("msg", "unexpected non-numeric Telegram chat id", "playerid", playerID, "message", message, "error", err)
+		b.Logger.Log("Cannot send message", "playerid", playerID, "message", message, "error", err)
 		return
 	}
 
 	if err = b.telebot.SendMessage(telebot.Chat{ID: chatID}, message, nil); err != nil {
+		b.Logger.Log("msg", "failed to send message to user", "playerid", playerID, "message", message, "error", err)
+		return
+	}
+
+	b.Logger.Log("msg", "Telegram message sent", "chatid", chatID, "message", message)
+}
+
+func (b *Bot) ParseUserID(id string) (int64, error) {
+	if !strings.HasPrefix(id, "telegram_") {
+		return 0, errors.New(" non-Telegram user")
+	}
+
+	return strconv.ParseInt(id[9:], 10, 64);
+}
+
+func (b *Bot) ForwardMessage(playerID string, messageID int, messageOwnerID string) {
+
+	chatID, err := b.ParseUserID(playerID)
+	if err != nil {
+		b.Logger.Log("Cannot forward message", "playerid", playerID, "messageOwner", messageOwnerID, "error", err)
+		return
+	}
+
+	ownerID, err := b.ParseUserID(playerID)
+	if err != nil {
+		b.Logger.Log("Cannot forward message", "playerid", playerID, "messageOwner", messageOwnerID, "error", err)
+		return
+	}
+
+	message := telebot.Message{ID: messageID, Sender: telebot.User{ID: int(ownerID)}}
+	if err = b.telebot.ForwardMessage(telebot.Chat{ID: chatID}, message); err != nil {
 		b.Logger.Log("msg", "failed to send message to user", "playerid", playerID, "message", message, "error", err)
 		return
 	}

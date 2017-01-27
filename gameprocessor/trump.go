@@ -7,7 +7,8 @@ import (
 	"github.com/beevee/switchers"
 )
 
-func (gp *GameProcessor) executeTrumpCommand(command string, player *switchers.Player) {
+func (gp *GameProcessor) executeTrumpCommand(cmd Command, player *switchers.Player) {
+	command := cmd.Command;
 	if player.State == playerStateModerating {
 		round, err := gp.RoundRepository.GetActiveRound()
 		if round.ID == "" {
@@ -82,7 +83,8 @@ func (gp *GameProcessor) executeTrumpCommand(command string, player *switchers.P
 					return
 				}
 				gp.Bot.SendMessage(player.ID, responseTrumpTaskPrefix+team.ActualTask.Text)
-				gp.Bot.SendMessage(player.ID, responseTrumpAnswerPrefix+team.Answer)
+				gp.Bot.SendMessage(player.ID, responseTrumpAnswerPrefix)
+				gp.Bot.ForwardMessage(player.ID, team.Answer.MessageID, team.Answer.OwnerID)
 				gp.Bot.SendMessage(player.ID, responseTrumpModerationInstructions)
 				return
 			}

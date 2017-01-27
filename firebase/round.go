@@ -143,15 +143,15 @@ func (rr *RoundRepository) SetTeamActualDeadline(round *switchers.Round, index i
 }
 
 // SetTeamAnswer sets team answer for actual task
-func (rr *RoundRepository) SetTeamAnswer(round *switchers.Round, index int, answer string) error {
-	ref, err := rr.firebase.Ref("rounds/" + round.ID + "/Teams/" + strconv.FormatInt(int64(index), 10) + "/Answer")
+func (rr *RoundRepository) SetTeamAnswer(round *switchers.Round, index int, answer *switchers.Answer) error {
+	ref, err := rr.firebase.Ref("rounds/" + round.ID + "/Teams/" + strconv.FormatInt(int64(index), 10) + "/AnswerData")
 	if err != nil {
 		return err
 	}
 
 	err = ref.Set(answer)
 	if err != nil {
-		round.Teams[index].Answer = answer
+		round.Teams[index].Answer = *answer
 	}
 	return err
 }
