@@ -58,22 +58,22 @@ func (b *Bot) Stop() error {
 }
 
 // SendMessage sends message to Telegram user
-func (b *Bot) SendMessage(ID string, message string) {
-	if !strings.HasPrefix(ID, "telegram_") {
-		b.Logger.Log("msg", "cannot send messages to a non-Telegram user", "id", ID, "message", message)
+func (b *Bot) SendMessage(playerID string, message string) {
+	if !strings.HasPrefix(playerID, "telegram_") {
+		b.Logger.Log("msg", "cannot send messages to a non-Telegram user", "playerid", playerID, "message", message)
 		return
 	}
 
-	chatID, err := strconv.ParseInt(ID[9:], 10, 64)
+	chatID, err := strconv.ParseInt(playerID[9:], 10, 64)
 	if err != nil {
-		b.Logger.Log("msg", "unexpected non-numeric Telegram chat id", "id", ID, "message", message, "error", err)
+		b.Logger.Log("msg", "unexpected non-numeric Telegram chat id", "playerid", playerID, "message", message, "error", err)
 		return
 	}
 
 	if err = b.telebot.SendMessage(telebot.Chat{ID: chatID}, message, nil); err != nil {
-		b.Logger.Log("msg", "failed to send message to user", "id", ID, "message", message, "error", err)
+		b.Logger.Log("msg", "failed to send message to user", "playerid", playerID, "message", message, "error", err)
 		return
 	}
 
-	b.Logger.Log("msg", "Telegram message sent", "chatid", ID, "message", message)
+	b.Logger.Log("msg", "Telegram message sent", "chatid", chatID, "message", message)
 }

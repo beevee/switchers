@@ -26,9 +26,9 @@ func (gp *GameProcessor) executeTrumpCommand(command string, player *switchers.P
 			switch strings.ToLower(command) {
 			case commandYes:
 				if err = gp.RoundRepository.SetTeamState(round, player.ModeratingTeamIndex, teamStateWon); err != nil {
-					gp.Logger.Log("msg", "failed to set won team state (playing)", "index", player.ModeratingTeamIndex, "error", err)
+					gp.Logger.Log("msg", "failed to set won team state (playing)", "teamindex", player.ModeratingTeamIndex, "error", err)
 				}
-				gp.Logger.Log("msg", "team won by answering correctly after moderation", "index", player.ModeratingTeamIndex, "answer", team.Answer)
+				gp.Logger.Log("msg", "team won by answering correctly after moderation", "teamindex", player.ModeratingTeamIndex, "answer", team.Answer)
 				gp.notifyTrumps(fmt.Sprintf(responseTrumpTeamWon, player.ModeratingTeamIndex))
 				gp.updateActualTeamMemberStates(team, playerStateIdle)
 				gp.increaseActualTeamMemberScores(team)
@@ -36,9 +36,9 @@ func (gp *GameProcessor) executeTrumpCommand(command string, player *switchers.P
 
 			case commandNo:
 				if err = gp.RoundRepository.SetTeamState(round, player.ModeratingTeamIndex, teamStateLost); err != nil {
-					gp.Logger.Log("msg", "failed to set lost team state (playing)", "index", player.ModeratingTeamIndex, "error", err)
+					gp.Logger.Log("msg", "failed to set lost team state (playing)", "teamindex", player.ModeratingTeamIndex, "error", err)
 				}
-				gp.Logger.Log("msg", "team lost by answering incorrectly after moderation (playing)", "index", player.ModeratingTeamIndex)
+				gp.Logger.Log("msg", "team lost by answering incorrectly after moderation (playing)", "teamindex", player.ModeratingTeamIndex)
 				gp.notifyTrumps(fmt.Sprintf(responseTrumpTeamLost, player.ModeratingTeamIndex))
 				gp.updateActualTeamMemberStates(team, playerStateIdle)
 				gp.notifyActualTeamMembers(team, responseTeamLost)
