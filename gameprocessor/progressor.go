@@ -124,6 +124,7 @@ func (gp *GameProcessor) gameProgressor() error {
 				gp.notifyTrumps(responseTrumpActiveRoundFinished)
 			}
 		case <-gp.tomb.Dying():
+			gp.Logger.Log("msg", "aborted game progressor goroutine")
 			return nil
 		}
 	}

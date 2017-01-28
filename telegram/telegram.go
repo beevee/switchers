@@ -44,6 +44,7 @@ func (b *Bot) Start() error {
 
 				b.GameProcessor.ExecuteCommand(strconv.Itoa(message.ID), message.Text, "telegram_"+strconv.FormatInt(message.Chat.ID, 10))
 			case <-b.tomb.Dying():
+				b.Logger.Log("msg", "aborted Telegram message receiving goroutine")
 				return nil
 			}
 		}
