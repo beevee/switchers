@@ -7,8 +7,7 @@ import (
 	"github.com/beevee/switchers"
 )
 
-func (gp *GameProcessor) executeTrumpCommand(cmd Command, player *switchers.Player) {
-	command := cmd.Command;
+func (gp *GameProcessor) executeTrumpCommand(cmd command, player *switchers.Player) {
 	if player.State == playerStateModerating {
 		round, err := gp.RoundRepository.GetActiveRound()
 		if round.ID == "" {
@@ -24,7 +23,7 @@ func (gp *GameProcessor) executeTrumpCommand(cmd Command, player *switchers.Play
 		if team.State != teamStateModeration {
 			gp.Bot.SendMessage(player.ID, responseTrumpAlreadyModerated)
 		} else {
-			switch strings.ToLower(command) {
+			switch strings.ToLower(cmd.text) {
 			case commandYes:
 				if err = gp.RoundRepository.SetTeamState(round, player.ModeratingTeamIndex, teamStateWon); err != nil {
 					gp.Logger.Log("msg", "failed to set won team state (playing)", "teamindex", player.ModeratingTeamIndex, "error", err)
@@ -53,7 +52,7 @@ func (gp *GameProcessor) executeTrumpCommand(cmd Command, player *switchers.Play
 		return
 	}
 
-	switch command {
+	switch cmd.text {
 	case commandNewRound:
 		if err := gp.startNewRound(); err != nil {
 			gp.Bot.SendMessage(player.ID, fmt.Sprintf(responseTrumpSomethingWrong, err))
@@ -84,7 +83,7 @@ func (gp *GameProcessor) executeTrumpCommand(cmd Command, player *switchers.Play
 				}
 				gp.Bot.SendMessage(player.ID, responseTrumpTaskPrefix+team.ActualTask.Text)
 				gp.Bot.SendMessage(player.ID, responseTrumpAnswerPrefix)
-				gp.Bot.ForwardMessage(player.ID, team.Answer.MessageID, team.Answer.OwnerID)
+				gp.Bot.ForwardMessage(player.ID, team.Answer.Text, team.Answer.MessageID, team.Answer.OwnerID)
 				gp.Bot.SendMessage(player.ID, responseTrumpModerationInstructions)
 				return
 			}

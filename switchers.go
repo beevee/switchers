@@ -73,10 +73,11 @@ type GatheringTask struct {
 	TimeLimitMinutes int
 }
 
+// Answer is a team answer with original message details
 type Answer struct {
 	Text      string
 	OwnerID   string
-	MessageID int
+	MessageID string
 }
 
 // ActualTask is a task for team that gathered
@@ -89,10 +90,10 @@ type ActualTask struct {
 // Bot maintains communication with players
 type Bot interface {
 	SendMessage(ID string, message string)
-	ForwardMessage(ID string, messageID int, messageOwnerID string)
+	ForwardMessage(ID string, messageText string, messageID string, messageOwnerID string)
 }
 
 // GameProcessor contains all in-game logic
 type GameProcessor interface {
-	ExecuteCommand(command string, commandID int, playerID string)
+	ExecuteCommand(commandID string, commandText string, playerID string)
 }

@@ -16,18 +16,18 @@ type GameProcessor struct {
 	TaskRepository        switchers.TaskRepository
 	Bot                   switchers.Bot
 	Logger                switchers.Logger
-	playerCommandChannels map[string]chan string
+	playerCommandChannels map[string]chan command
 	tomb                  tomb.Tomb
 }
 
-type Command struct {
-	Command   string
-	CommandID int
+type command struct {
+	id   string
+	text string
 }
 
 // Start initializes loops that make game go round
 func (gp *GameProcessor) Start() error {
-	gp.playerCommandChannels = make(map[string]chan string)
+	gp.playerCommandChannels = make(map[string]chan command)
 
 	gp.tomb.Go(gp.gameProgressor)
 
@@ -41,25 +41,29 @@ func (gp *GameProcessor) Stop() error {
 }
 
 // ExecuteCommand takes text command from a player and schedules it for execution in a separate channel for exch user
-func (gp *GameProcessor) ExecuteCommand(command string, commandID int, playerID string) {
+func (gp *GameProcessor) ExecuteCommand(commandText string, commandID string, playerID string) {
 	_, exists := gp.playerCommandChannels[playerID]
 
 	if !exists {
-		gp.playerCommandChannels[playerID] = make(chan string, 1000)
+		gp.playerCommandChannels[playerID] = make(chan command, 1000)
 		gp.tomb.Go(func() error {
-			gp.playerCommandExecutor(playerID, commandID, gp.playerCommandChannels[playerID])
+			gp.playerCommandExecutor(playerID, gp.playerCommandChannels[playerID])
 			return nil
 		})
 		gp.Logger.Log("msg", "created new command executor goroutine for player", "playerid", playerID)
 	}
 
-	gp.playerCommandChannels[playerID] <- command
+	cmd := command{
+		id:   commandID,
+		text: commandText,
+	}
+	gp.playerCommandChannels[playerID] <- cmd
 }
 
-func (gp *GameProcessor) playerCommandExecutor(playerID string, commandID int, playerCommands <-chan string) {
+func (gp *GameProcessor) playerCommandExecutor(playerID string, playerCommands <-chan command) {
 	for {
 		select {
-		case command := <-playerCommands:
+		case cmd := <-playerCommands:
 			player, created, err := gp.PlayerRepository.GetOrCreatePlayer(playerID)
 			if err != nil {
 				gp.Logger.Log("msg", "error retrieving player profile while executing command", "error", err)
@@ -68,7 +72,7 @@ func (gp *GameProcessor) playerCommandExecutor(playerID string, commandID int, p
 				gp.Logger.Log("msg", "created player profile", "playerid", player.ID)
 			}
 
-			if command == gp.TrumpCode {
+			if cmd.text == gp.TrumpCode {
 				if err := gp.PlayerRepository.SetTrump(player, true); err != nil {
 					gp.Bot.SendMessage(player.ID, responseSomethingWrong)
 					gp.Logger.Log("msg", "failed to make player Trump", "error", err)
@@ -76,7 +80,6 @@ func (gp *GameProcessor) playerCommandExecutor(playerID string, commandID int, p
 				}
 			}
 
-			cmd := Command{Command: command, CommandID: commandID}
 			if player.Trump {
 				gp.executeTrumpCommand(cmd, player)
 			} else {

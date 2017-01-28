@@ -7,9 +7,8 @@ import (
 	"github.com/beevee/switchers"
 )
 
-func (gp *GameProcessor) executePlayerCommand(cmd Command, player *switchers.Player) {
-	command := cmd.Command;
-	if command == commandPause {
+func (gp *GameProcessor) executePlayerCommand(cmd command, player *switchers.Player) {
+	if cmd.text == commandPause {
 		if err := gp.PlayerRepository.SetPaused(player, true); err != nil {
 			gp.Bot.SendMessage(player.ID, responseSomethingWrong)
 			return
@@ -17,7 +16,7 @@ func (gp *GameProcessor) executePlayerCommand(cmd Command, player *switchers.Pla
 	}
 
 	if player.Paused {
-		if command != commandResume {
+		if cmd.text != commandResume {
 			gp.Bot.SendMessage(player.ID, responseGamePaused)
 			return
 		}
@@ -43,7 +42,7 @@ func (gp *GameProcessor) executePlayerCommand(cmd Command, player *switchers.Pla
 			gp.Bot.SendMessage(player.ID, responseSomethingWrong)
 			return
 		}
-		if err := gp.PlayerRepository.SetName(player, command); err != nil {
+		if err := gp.PlayerRepository.SetName(player, cmd.text); err != nil {
 			gp.Bot.SendMessage(player.ID, responseSomethingWrong)
 			return
 		}
@@ -51,7 +50,7 @@ func (gp *GameProcessor) executePlayerCommand(cmd Command, player *switchers.Pla
 		return
 
 	case playerStateIdle:
-		if command == commandSetName {
+		if cmd.text == commandSetName {
 			if err := gp.PlayerRepository.SetState(player, playerStateAskName); err != nil {
 				gp.Bot.SendMessage(player.ID, responseSomethingWrong)
 				return
@@ -60,7 +59,7 @@ func (gp *GameProcessor) executePlayerCommand(cmd Command, player *switchers.Pla
 			return
 		}
 
-		if command == commandLeaders {
+		if cmd.text == commandLeaders {
 			leaders, err := gp.PlayerRepository.GetTop(5)
 			if err != nil {
 				gp.Bot.SendMessage(player.ID, responseSomethingWrong)
@@ -104,7 +103,7 @@ func (gp *GameProcessor) executePlayerCommand(cmd Command, player *switchers.Pla
 
 		switch round.Teams[playersTeamIndex].State {
 		case teamStateGathering:
-			if strings.ToLower(command) == commandGathered {
+			if strings.ToLower(cmd.text) == commandGathered {
 				if err = gp.RoundRepository.AddTeamMemberToActual(round, playersTeamIndex, player.ID); err != nil {
 					gp.Bot.SendMessage(player.ID, responseSomethingWrong)
 					gp.Logger.Log("msg", "failed to set player gathered state", "playerid", player.ID, "teamindex", playersTeamIndex)
@@ -117,15 +116,15 @@ func (gp *GameProcessor) executePlayerCommand(cmd Command, player *switchers.Pla
 			return
 
 		case teamStatePlaying:
-			if strings.ToLower(command) == commandGathered {
+			if strings.ToLower(cmd.text) == commandGathered {
 				gp.Bot.SendMessage(player.ID, responseGatherNotAnswer)
 				return
 			}
 
-			answer := switchers.Answer{MessageID: cmd.CommandID, Text: command, OwnerID: player.ID}
+			answer := switchers.Answer{MessageID: cmd.id, Text: cmd.text, OwnerID: player.ID}
 			if err = gp.RoundRepository.SetTeamAnswer(round, playersTeamIndex, &answer); err != nil {
 				gp.Bot.SendMessage(player.ID, responseSomethingWrong)
-				gp.Logger.Log("msg", "failed to set team answer", "playerid", player.ID, "teamindex", playersTeamIndex, "answer", command)
+				gp.Logger.Log("msg", "failed to set team answer", "playerid", player.ID, "teamindex", playersTeamIndex, "answer", cmd.text)
 				return
 			}
 			gp.Bot.SendMessage(player.ID, responsePlayerAnswered)
