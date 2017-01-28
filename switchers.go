@@ -80,6 +80,11 @@ type Answer struct {
 	MessageID string
 }
 
+// IsEmpty detects if Answer contains usable information
+func (a Answer) IsEmpty() bool {
+	return a.Text == "" || a.MessageID == ""
+}
+
 // ActualTask is a task for team that gathered
 type ActualTask struct {
 	Text             string
