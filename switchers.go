@@ -16,17 +16,6 @@ type PlayerRepository interface {
 	IncreaseScore(player *Player) error
 }
 
-// Player is a player
-type Player struct {
-	ID                  string
-	Trump               bool
-	State               string
-	Name                string
-	Paused              bool
-	Score               int
-	ModeratingTeamIndex int
-}
-
 // RoundRepository persists round information
 type RoundRepository interface {
 	GetActiveRound() (*Round, error)
@@ -40,56 +29,10 @@ type RoundRepository interface {
 	SetTeamAnswer(round *Round, index int, answer *Answer) error
 }
 
-// Round is a round
-type Round struct {
-	ID        string
-	StartTime time.Time
-	Teams     []*Team
-}
-
-// Team is a team
-type Team struct {
-	State                  string
-	GatheringPlayers       map[string]Player
-	ActualPlayers          map[string]Player
-	MissingPlayers         map[string]Player
-	GatheringTask          GatheringTask
-	GatheringDeadline      time.Time
-	MissingPlayersDeadline time.Time
-	ActualTask             ActualTask
-	ActualDeadline         time.Time
-	Answer                 Answer
-}
-
 // TaskRepository persists task information
 type TaskRepository interface {
 	GetAllGatheringTasks() ([]GatheringTask, error)
 	GetAllActualTasks() ([]ActualTask, error)
-}
-
-// GatheringTask is a task to gather team
-type GatheringTask struct {
-	Text             string
-	TimeLimitMinutes int
-}
-
-// Answer is a team answer with original message details
-type Answer struct {
-	Text      string
-	OwnerID   string
-	MessageID string
-}
-
-// IsEmpty detects if Answer contains usable information
-func (a Answer) IsEmpty() bool {
-	return a.Text == "" || a.MessageID == ""
-}
-
-// ActualTask is a task for team that gathered
-type ActualTask struct {
-	Text             string
-	TimeLimitMinutes int
-	CorrectAnswers   []string
 }
 
 // Bot maintains communication with players
