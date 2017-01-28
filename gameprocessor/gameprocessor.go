@@ -41,7 +41,7 @@ func (gp *GameProcessor) Stop() error {
 }
 
 // ExecuteCommand takes text command from a player and schedules it for execution in a separate channel for exch user
-func (gp *GameProcessor) ExecuteCommand(commandText string, commandID string, playerID string) {
+func (gp *GameProcessor) ExecuteCommand(commandID string, commandText string, playerID string) {
 	_, exists := gp.playerCommandChannels[playerID]
 
 	if !exists {
