@@ -34,7 +34,6 @@ const (
 	responseTrumpAlreadyModerated       = "Эту команду кто-то уже отмодерировал."
 	responseTrumpRoundStarted           = "Начался новый раунд."
 	responseTrumpTaskPrefix             = "Задание: "
-	responseTrumpAnswerPrefix           = "Ответ: "
 	responseTrumpModerationInstructions = "Напиши \"" + commandYes + "\", если ответ правильный. Напиши \"" + commandNo + "\", если ответ неправильный. Напиши что угодно другое, чтобы бросить это занятие и пойти строить стену на границе с Мексикой."
 	responseTrumpResigned               = "Отставка принята."
 	responseTrumpDefault                = "Добро пожаловать, господин президент. Издайте какой-нибудь указ:\n\n" + commandNewRound + " — запустить новый раунд\n" + commandModerate + " — модерировать что-нибудь\n" + commandLeaders + " — посмотреть очки игроков\n" + commandResign + " — подать в отставку"

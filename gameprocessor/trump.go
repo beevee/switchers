@@ -82,7 +82,6 @@ func (gp *GameProcessor) executeTrumpCommand(cmd command, player *switchers.Play
 					return
 				}
 				gp.Bot.SendMessage(player.ID, responseTrumpTaskPrefix+team.ActualTask.Text)
-				gp.Bot.SendMessage(player.ID, responseTrumpAnswerPrefix)
 				gp.Bot.ForwardMessage(player.ID, team.Answer.Text, team.Answer.MessageID, team.Answer.OwnerID)
 				gp.Bot.SendMessage(player.ID, responseTrumpModerationInstructions)
 				return
