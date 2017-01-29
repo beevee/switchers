@@ -38,12 +38,6 @@ const (
 	responseTrumpResigned               = "Отставка принята."
 	responseTrumpDefault                = "Добро пожаловать, господин президент. Издайте какой-нибудь указ:\n\n" + commandNewRound + " — запустить новый раунд\n" + commandModerate + " — модерировать что-нибудь\n" + commandLeaders + " — посмотреть очки игроков\n" + commandResign + " — подать в отставку"
 
-	playerStateNew        = ""
-	playerStateAskName    = "askname"
-	playerStateIdle       = "idle"
-	playerStateInGame     = "ingame"
-	playerStateModerating = "moderating"
-
 	teamStateGathering  = "gathering"
 	teamStatePlaying    = "playing"
 	teamStateModeration = "moderation"

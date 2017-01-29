@@ -56,7 +56,7 @@ func (gp *GameProcessor) gameProgressor() error {
 								if err = gp.RoundRepository.AddTeamMemberToMissing(round, i, playerID); err != nil {
 									gp.Logger.Log("msg", "failed to add player to missing", "playerid", playerID, "teamindex", i, "error", err)
 								}
-								gp.PlayerRepository.SetState(&switchers.Player{ID: playerID}, playerStateIdle)
+								gp.PlayerRepository.SetState(&switchers.Player{ID: playerID}, switchers.PlayerStateIdle)
 								gp.Bot.SendMessage(playerID, responsePlayerFailedToGather)
 							}
 						}
@@ -70,7 +70,7 @@ func (gp *GameProcessor) gameProgressor() error {
 						}
 						gp.Logger.Log("msg", "timeouted a team (gathering)", "teamindex", i)
 						gp.notifyTrumps(fmt.Sprintf(responseTrumpTeamFailedToGather, i))
-						gp.updateGatheringTeamMemberStates(team, playerStateIdle)
+						gp.updateGatheringTeamMemberStates(team, switchers.PlayerStateIdle)
 						gp.notifyGatheringTeamMembers(team, responseTeamFailedToGather)
 					}
 				}
@@ -85,7 +85,7 @@ func (gp *GameProcessor) gameProgressor() error {
 								}
 								gp.Logger.Log("msg", "team won by answering correctly", "teamindex", i, "answer", team.Answer.Text)
 								gp.notifyTrumps(fmt.Sprintf(responseTrumpTeamWon, i))
-								gp.updateActualTeamMemberStates(team, playerStateIdle)
+								gp.updateActualTeamMemberStates(team, switchers.PlayerStateIdle)
 								gp.increaseActualTeamMemberScores(team)
 								gp.notifyActualTeamMembers(team, responseTeamWon)
 								continue TEAMLOOP
@@ -109,7 +109,7 @@ func (gp *GameProcessor) gameProgressor() error {
 						}
 						gp.Logger.Log("msg", "timeouted a team (playing)", "teamindex", i)
 						gp.notifyTrumps(fmt.Sprintf(responseTrumpTeamFailedToAnswer, i))
-						gp.updateActualTeamMemberStates(team, playerStateIdle)
+						gp.updateActualTeamMemberStates(team, switchers.PlayerStateIdle)
 						gp.notifyActualTeamMembers(team, responseTeamFailedToAnswer)
 					}
 				}

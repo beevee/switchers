@@ -8,7 +8,7 @@ import (
 )
 
 func (gp *GameProcessor) executeTrumpCommand(cmd command, player *switchers.Player) {
-	if player.State == playerStateModerating {
+	if player.State == switchers.PlayerStateModerating {
 		round, err := gp.RoundRepository.GetActiveRound()
 		if round.ID == "" {
 			gp.Bot.SendMessage(player.ID, responseTrumpNothingToModerate)
@@ -30,7 +30,7 @@ func (gp *GameProcessor) executeTrumpCommand(cmd command, player *switchers.Play
 				}
 				gp.Logger.Log("msg", "team won by answering correctly after moderation", "teamindex", player.ModeratingTeamIndex, "answer", team.Answer)
 				gp.notifyTrumps(fmt.Sprintf(responseTrumpTeamWon, player.ModeratingTeamIndex))
-				gp.updateActualTeamMemberStates(team, playerStateIdle)
+				gp.updateActualTeamMemberStates(team, switchers.PlayerStateIdle)
 				gp.increaseActualTeamMemberScores(team)
 				gp.notifyActualTeamMembers(team, responseTeamWon)
 
@@ -40,13 +40,13 @@ func (gp *GameProcessor) executeTrumpCommand(cmd command, player *switchers.Play
 				}
 				gp.Logger.Log("msg", "team lost by answering incorrectly after moderation (playing)", "teamindex", player.ModeratingTeamIndex)
 				gp.notifyTrumps(fmt.Sprintf(responseTrumpTeamLost, player.ModeratingTeamIndex))
-				gp.updateActualTeamMemberStates(team, playerStateIdle)
+				gp.updateActualTeamMemberStates(team, switchers.PlayerStateIdle)
 				gp.notifyActualTeamMembers(team, responseTeamLost)
 			}
 		}
 
 		gp.Bot.SendMessage(player.ID, "We made America great again!")
-		if err := gp.PlayerRepository.SetState(player, playerStateIdle); err != nil {
+		if err := gp.PlayerRepository.SetState(player, switchers.PlayerStateIdle); err != nil {
 			gp.Bot.SendMessage(player.ID, fmt.Sprintf(responseTrumpSomethingWrong, err))
 		}
 		return
@@ -77,7 +77,7 @@ func (gp *GameProcessor) executeTrumpCommand(cmd command, player *switchers.Play
 					gp.Bot.SendMessage(player.ID, fmt.Sprintf(responseTrumpSomethingWrong, err))
 					return
 				}
-				if err := gp.PlayerRepository.SetState(player, playerStateModerating); err != nil {
+				if err := gp.PlayerRepository.SetState(player, switchers.PlayerStateModerating); err != nil {
 					gp.Bot.SendMessage(player.ID, fmt.Sprintf(responseTrumpSomethingWrong, err))
 					return
 				}

@@ -29,16 +29,16 @@ func (gp *GameProcessor) executePlayerCommand(cmd command, player *switchers.Pla
 	}
 
 	switch player.State {
-	case playerStateNew:
-		if err := gp.PlayerRepository.SetState(player, playerStateAskName); err != nil {
+	case switchers.PlayerStateNew:
+		if err := gp.PlayerRepository.SetState(player, switchers.PlayerStateAskName); err != nil {
 			gp.Bot.SendMessage(player.ID, responseSomethingWrong)
 			return
 		}
 		gp.Bot.SendMessage(player.ID, responseAskName)
 		return
 
-	case playerStateAskName:
-		if err := gp.PlayerRepository.SetState(player, playerStateIdle); err != nil {
+	case switchers.PlayerStateAskName:
+		if err := gp.PlayerRepository.SetState(player, switchers.PlayerStateIdle); err != nil {
 			gp.Bot.SendMessage(player.ID, responseSomethingWrong)
 			return
 		}
@@ -49,9 +49,9 @@ func (gp *GameProcessor) executePlayerCommand(cmd command, player *switchers.Pla
 		gp.Bot.SendMessage(player.ID, fmt.Sprintf(responseNiceToMeet, player.Name))
 		return
 
-	case playerStateIdle:
+	case switchers.PlayerStateIdle:
 		if cmd.text == commandSetName {
-			if err := gp.PlayerRepository.SetState(player, playerStateAskName); err != nil {
+			if err := gp.PlayerRepository.SetState(player, switchers.PlayerStateAskName); err != nil {
 				gp.Bot.SendMessage(player.ID, responseSomethingWrong)
 				return
 			}
@@ -75,7 +75,7 @@ func (gp *GameProcessor) executePlayerCommand(cmd command, player *switchers.Pla
 			return
 		}
 
-	case playerStateInGame:
+	case switchers.PlayerStateInGame:
 		round, err := gp.RoundRepository.GetActiveRound()
 		if err != nil || round.ID == "" {
 			gp.Bot.SendMessage(player.ID, responseSomethingWrong)

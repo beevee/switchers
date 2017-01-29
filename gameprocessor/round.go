@@ -28,7 +28,7 @@ func (gp *GameProcessor) startNewRound() error {
 	}
 
 	for _, team := range round.Teams {
-		gp.updateGatheringTeamMemberStates(team, playerStateInGame)
+		gp.updateGatheringTeamMemberStates(team, switchers.PlayerStateInGame)
 		gp.notifyGatheringTeamMembers(team, team.GatheringTask.Text+responseGatheringTaskSuffix)
 	}
 
@@ -48,7 +48,7 @@ func (gp *GameProcessor) generateRound() (*switchers.Round, error) {
 
 	eligiblePlayers := make([]*switchers.Player, 0, len(players))
 	for _, player := range players {
-		if !player.Trump && !player.Paused {
+		if player.IsEligible() {
 			eligiblePlayers = append(eligiblePlayers, player)
 		}
 	}
