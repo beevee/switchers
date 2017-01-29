@@ -25,5 +25,5 @@ type Answer struct {
 
 // IsEmpty detects if Answer contains usable information
 func (a Answer) IsEmpty() bool {
-	return a.Text == "" || a.MessageID == ""
+	return a.Text == "" && a.MessageID == ""
 }
