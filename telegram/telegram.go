@@ -19,8 +19,20 @@ type Bot struct {
 	PlayerRepository switchers.PlayerRepository
 	GameProcessor    switchers.GameProcessor
 	Logger           switchers.Logger
+	outboxText       chan outgoingText
+	outboxForward    chan outgoingForward
 	telebot          *telebot.Bot
 	tomb             tomb.Tomb
+}
+
+type outgoingText struct {
+	chat telebot.Chat
+	text string
+}
+
+type outgoingForward struct {
+	chat    telebot.Chat
+	message telebot.Message
 }
 
 // Start initializes Telegram API connections
@@ -31,13 +43,12 @@ func (b *Bot) Start() error {
 		return err
 	}
 
-	messages := make(chan telebot.Message)
-	b.telebot.Listen(messages, 1*time.Second)
-
+	inbox := make(chan telebot.Message)
+	b.telebot.Listen(inbox, 1*time.Second)
 	b.tomb.Go(func() error {
 		for {
 			select {
-			case message := <-messages:
+			case message := <-inbox:
 				b.Logger.Log("msg", "Telegram message received", "firstname", message.Sender.FirstName,
 					"lastname", message.Sender.LastName, "username", message.Sender.Username,
 					"chatid", message.Chat.ID, "message", message.Text)
@@ -45,6 +56,32 @@ func (b *Bot) Start() error {
 				b.GameProcessor.ExecuteCommand(strconv.Itoa(message.ID), message.Text, "telegram_"+strconv.FormatInt(message.Chat.ID, 10))
 			case <-b.tomb.Dying():
 				b.Logger.Log("msg", "aborted Telegram message receiving goroutine")
+				return nil
+			}
+		}
+	})
+
+	b.outboxText = make(chan outgoingText, 1000)
+	b.outboxForward = make(chan outgoingForward, 1000)
+	b.tomb.Go(func() error {
+		for {
+			select {
+			case message := <-b.outboxText:
+				if err = b.telebot.SendMessage(message.chat, message.text, nil); err != nil {
+					b.Logger.Log("msg", "failed to send Telegram message", "chatid", message.chat.ID, "message", message.text, "error", err)
+				} else {
+					b.Logger.Log("msg", "Telegram message sent", "chatid", message.chat.ID, "message", message.text)
+				}
+				time.Sleep(200 * time.Millisecond)
+			case message := <-b.outboxForward:
+				if err = b.telebot.ForwardMessage(message.chat, message.message); err != nil {
+					b.Logger.Log("msg", "failed to forward Telegram message", "chatid", message.chat.ID, "messageid", message.message.ID, "ownerid", message.message.Sender.ID, "error", err)
+				} else {
+					b.Logger.Log("msg", "Telegram message forwarded", "chatid", message.chat.ID, "messageid", message.message.ID, "ownerid", message.message.Sender.ID)
+				}
+				time.Sleep(200 * time.Millisecond)
+			case <-b.tomb.Dying():
+				b.Logger.Log("msg", "aborted Telegram message sending goroutine")
 				return nil
 			}
 		}
@@ -67,12 +104,10 @@ func (b *Bot) SendMessage(playerID string, message string) {
 		return
 	}
 
-	if err = b.telebot.SendMessage(telebot.Chat{ID: chatID}, message, nil); err != nil {
-		b.Logger.Log("msg", "failed to send message to player", "playerid", playerID, "message", message, "error", err)
-		return
+	b.outboxText <- outgoingText{
+		chat: telebot.Chat{ID: chatID},
+		text: message,
 	}
-
-	b.Logger.Log("msg", "Telegram message sent", "chatid", chatID, "message", message)
 }
 
 // ForwardMessage forwards message to Telegram user
@@ -95,13 +130,10 @@ func (b *Bot) ForwardMessage(playerID string, messageText string, messageID stri
 		return
 	}
 
-	message := telebot.Message{ID: msgID, Sender: telebot.User{ID: int(ownerID)}}
-	if err = b.telebot.ForwardMessage(telebot.Chat{ID: chatID}, message); err != nil {
-		b.Logger.Log("msg", "failed to send message to user", "playerid", playerID, "message", message, "error", err)
-		return
+	b.outboxForward <- outgoingForward{
+		chat:    telebot.Chat{ID: chatID},
+		message: telebot.Message{ID: msgID, Sender: telebot.User{ID: int(ownerID)}},
 	}
-
-	b.Logger.Log("msg", "Telegram message sent", "chatid", chatID, "message", message)
 }
 
 func (b *Bot) parseUserID(id string) (int64, error) {
