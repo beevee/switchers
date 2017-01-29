@@ -76,7 +76,7 @@ func (gp *GameProcessor) gameProgressor() error {
 				}
 
 				if team.State == teamStatePlaying {
-					if team.Answer.IsEmpty() {
+					if !team.Answer.IsEmpty() {
 						for _, correctAnswer := range team.ActualTask.CorrectAnswers {
 							if team.Answer.Text == correctAnswer {
 								if err = gp.RoundRepository.SetTeamState(round, i, teamStateWon); err != nil {
