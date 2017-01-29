@@ -77,8 +77,6 @@ func (b *Bot) SendMessage(playerID string, message string) {
 
 // ForwardMessage forwards message to Telegram user
 func (b *Bot) ForwardMessage(playerID string, messageText string, messageID string, messageOwnerID string) {
-	b.Logger.Log("text", messageText, "msgid", messageID, "ownerid", messageOwnerID)
-
 	chatID, err := b.parseUserID(playerID)
 	if err != nil {
 		b.Logger.Log("msg", "cannot parse player id", "playerid", playerID, "messageowner", messageOwnerID, "error", err)
