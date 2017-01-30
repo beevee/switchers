@@ -22,5 +22,5 @@ type Player struct {
 
 // IsEligible detects if player can participate in a new round
 func (p Player) IsEligible() bool {
-	return !p.Trump && !p.Paused && p.State != PlayerStateAskName && p.State != PlayerStateNew && p.Name == ""
+	return !p.Trump && !p.Paused && p.State != PlayerStateAskName && p.State != PlayerStateNew && p.Name != ""
 }
