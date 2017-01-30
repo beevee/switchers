@@ -69,15 +69,23 @@ func (gp *GameProcessor) generateRound() (*switchers.Round, error) {
 	if err != nil {
 		return nil, err
 	}
-	if len(gatheringTasks) < teamCount {
+	gatheringTaskGroupIDs := make([]string, 0, len(gatheringTasks))
+	for groupID := range gatheringTasks {
+		gatheringTaskGroupIDs = append(gatheringTaskGroupIDs, groupID)
+	}
+	rand.Seed(time.Now().Unix())
+	gatheringTaskGroupID := gatheringTaskGroupIDs[rand.Intn(len(gatheringTaskGroupIDs))]
+	gp.Logger.Log("msg", "randomly selected gathering tasks group", "groupid", gatheringTaskGroupID)
+
+	if len(gatheringTasks[gatheringTaskGroupID]) < teamCount {
 		return nil, errors.New("not enough gathering tasks for a full round")
 	}
-	gp.Logger.Log("msg", "retrieved gathering tasks for new round", "count", len(gatheringTasks))
+	gp.Logger.Log("msg", "retrieved gathering tasks for new round", "count", len(gatheringTasks[gatheringTaskGroupID]))
 
 	// https://en.wikipedia.org/wiki/Fisher–Yates_shuffle
-	for i := range gatheringTasks {
+	for i := range gatheringTasks[gatheringTaskGroupID] {
 		j := rand.Intn(i + 1)
-		gatheringTasks[i], gatheringTasks[j] = gatheringTasks[j], gatheringTasks[i]
+		gatheringTasks[gatheringTaskGroupID][i], gatheringTasks[gatheringTaskGroupID][j] = gatheringTasks[gatheringTaskGroupID][j], gatheringTasks[gatheringTaskGroupID][i]
 	}
 
 	actualTasks, err := gp.TaskRepository.GetAllActualTasks()
@@ -100,9 +108,9 @@ func (gp *GameProcessor) generateRound() (*switchers.Round, error) {
 		round.Teams[i] = &switchers.Team{
 			State:             teamStateGathering,
 			GatheringPlayers:  make(map[string]switchers.Player),
-			GatheringTask:     gatheringTasks[i],
+			GatheringTask:     gatheringTasks[gatheringTaskGroupID][i],
 			ActualTask:        actualTasks[i],
-			GatheringDeadline: round.StartTime.Add(time.Minute * time.Duration(gatheringTasks[i].TimeLimitMinutes)),
+			GatheringDeadline: round.StartTime.Add(time.Minute * time.Duration(gatheringTasks[gatheringTaskGroupID][i].TimeLimitMinutes)),
 		}
 	}
 	for i, player := range eligiblePlayers {
@@ -112,7 +120,7 @@ func (gp *GameProcessor) generateRound() (*switchers.Round, error) {
 
 	hhmm := time.Now().Format("15:04")
 	for i := range round.Teams {
-		round.Teams[i].GatheringTask.Text = strings.Replace(gatheringTasks[i].Text, "ЧЧ:ММ", hhmm, -1)
+		round.Teams[i].GatheringTask.Text = strings.Replace(gatheringTasks[gatheringTaskGroupID][i].Text, "ЧЧ:ММ", hhmm, -1)
 		gatheringPlayerNames := make([]string, 0, len(round.Teams[i].GatheringPlayers))
 		for _, player := range round.Teams[i].GatheringPlayers {
 			gatheringPlayerNames = append(gatheringPlayerNames, player.Name)

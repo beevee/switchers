@@ -31,7 +31,7 @@ type RoundRepository interface {
 
 // TaskRepository persists task information
 type TaskRepository interface {
-	GetAllGatheringTasks() ([]GatheringTask, error)
+	GetAllGatheringTasks() (map[string][]GatheringTask, error)
 	GetAllActualTasks() ([]ActualTask, error)
 }
 
