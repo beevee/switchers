@@ -28,7 +28,7 @@ func (gp *GameProcessor) executeTrumpCommand(cmd command, player *switchers.Play
 				if err = gp.RoundRepository.SetTeamState(round, player.ModeratingTeamIndex, teamStateWon); err != nil {
 					gp.Logger.Log("msg", "failed to set won team state (playing)", "teamindex", player.ModeratingTeamIndex, "error", err)
 				}
-				gp.Logger.Log("msg", "team won by answering correctly after moderation", "teamindex", player.ModeratingTeamIndex, "answer", team.Answer)
+				gp.Logger.Log("msg", "team won by answering correctly after moderation", "teamindex", player.ModeratingTeamIndex, "answer", team.Answer.Text)
 				gp.notifyTrumps(fmt.Sprintf(responseTrumpTeamWon, player.ModeratingTeamIndex))
 				gp.updateActualTeamMemberStates(team, switchers.PlayerStateIdle)
 				gp.increaseActualTeamMemberScores(team)
