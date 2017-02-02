@@ -87,6 +87,8 @@ func (gp *GameProcessor) executeTrumpCommand(cmd command, player *switchers.Play
 				return
 			}
 		}
+		gp.Bot.SendMessage(player.ID, responseTrumpNothingToModerate)
+		return
 
 	case commandLeaders:
 		leaders, err := gp.PlayerRepository.GetTop(500)
